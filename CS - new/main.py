@@ -184,11 +184,7 @@ class Batch10sPipeline:
             mitm_results = future_mitm.result()
             ml_results = future_ml.result()
 
-        # Aggregate Results - ml_results contains the grouped DataFrame per IP
-        if ml_results is None or ml_results.empty:
-            print(f"[{batch_time}]  — Packets bypassed IP/TCP/UDP filtering.")
-            return
-
+        # 3. Print combined MITM & DDoS result
         self._evaluate_and_log(batch_time, ml_results, mitm_results)
 
     def _run_mitm_engine(self, packets):
@@ -198,17 +194,12 @@ class Batch10sPipeline:
         for pkt in packets:
             self.mitm_detector._process_packet(pkt)
         
-        # Read the internal threat scores for the current IPs
-        # MitmDetector maintains state internally. We pull the current risk levels.
+        # Read the internal threat scores for the current IPs from the Risk Engine
         mitm_scores = {}
-        # Since _evaluate_engine calculates score and updates tracking, 
-        # we bypass the internal alert callback for direct access to the state
-        if hasattr(self.mitm_detector, '_mac_tracker'):
-            for ip, info in self.mitm_detector._mac_tracker.items():
-                if info.get('suspicious', False) or info.get('seen_count', 0) > 5:
-                    score = self.mitm_detector._evaluate_engine(ip)
-                    if score > 0:
-                        mitm_scores[ip] = max(0.0, min(score / 100.0, 1.0))
+        all_scores = self.mitm_detector.get_risk_scores()
+        for ip, record in all_scores.items():
+            # Normalized score for decision engine (0.0 to 1.0)
+            mitm_scores[ip] = max(0.0, min(record.total_score / 100.0, 1.0))
         return mitm_scores
 
     def _run_ml_ddos_engine(self, packets):
@@ -282,20 +273,36 @@ class Batch10sPipeline:
             global_syn_count = int((df_features['syn_flag_ratio'] * df_features['packet_count']).sum())
             
         global_pps = df_features['packet_rate'].sum() if 'packet_rate' in df_features.columns else 0
-        unique_ips = len(df_features)
+        # Get unique IPs from both sources
+        all_active_ips = set(df_features['src_ip'].unique()) if not df_features.empty else set()
+        all_active_ips.update(mitm_scores.keys())
 
-        for _, row in df_features.iterrows():
-            src_ip = row['src_ip']
-            dst_ip = row['dst_ip']
-            pps = row['packet_rate']
-            syn_ratio = row.get('syn_flag_ratio', 0.0)
+        unique_ips = len(all_active_ips)
+
+        for src_ip in all_active_ips:
+            # Try to get row from df_features
+            rows = df_features[df_features['src_ip'] == src_ip] if not df_features.empty else pd.DataFrame()
             
+            if not rows.empty:
+                row = rows.iloc[0]
+                dst_ip = row['dst_ip']
+                pps = row['packet_rate']
+                syn_ratio = row.get('syn_flag_ratio', 0.0)
+                byte_rate = row.get('byte_rate', 0)
+                xgb_score = row.get('xgb_prob', 0) * 100.0
+                if_anomaly = (row.get('if_anomaly', 1) == -1)
+                conn_flag = row.get('session_pattern', 'SF').split('-')[-1] if '-' in row.get('session_pattern', '') else 'SF'
+            else:
+                # MITM only or incomplete data
+                dst_ip = "Unknown"
+                pps = 0.0
+                syn_ratio = 0.0
+                byte_rate = 0
+                xgb_score = 0
+                if_anomaly = False
+                conn_flag = "SF"
+
             mitm_risk = mitm_scores.get(src_ip, 0.0)
-            
-            # Default missing things
-            xgb_score = row.get('xgb_prob', 0) * 100.0
-            if_anomaly = (row.get('if_anomaly', 1) == -1)
-            conn_flag = row.get('session_pattern', 'SF').split('-')[-1] if '-' in row.get('session_pattern', '') else 'SF'
             
             # Decision Engine (State track + fusion)
             result = self.decision_engine.evaluate(
@@ -306,13 +313,13 @@ class Batch10sPipeline:
                 spike_zscore=0.0,
                 syn_ratio=syn_ratio,
                 pps=pps,
-                byte_rate=row.get('byte_rate', 0),
+                byte_rate=byte_rate,
                 connection_flag=conn_flag,
                 ip_address=src_ip,
                 dst_ip=dst_ip,
                 mitm_risk=mitm_risk,
-                unique_src_ips=1,         # Per-Ip evaluation
-                global_pps=global_pps,    # Context
+                unique_src_ips=1,
+                global_pps=global_pps,
                 global_syn_count=global_syn_count
             )
 
@@ -327,18 +334,14 @@ class Batch10sPipeline:
             log_row = [batch_time, src_ip, dst_ip, round(pps, 1), round(mitm_risk, 2), round(ml_risk, 2), round(final_risk, 2), decision.upper(), attack_type, reasons]
             logs_to_write.append(log_row)
 
-            # 🔒 FIREWALL BLOCK: Execute OS-level IP block on BLOCK decisions
+            # 🔒 FIREWALL BLOCK
             if decision == "block" and self.ip_blocker:
                 if not self.ip_blocker.is_blocked(src_ip):
-                    self.ip_blocker.block_ip(
-                        ip=src_ip,
-                        reason=attack_type,
-                        severity=final_risk,
-                        duration=600,  # 10 minutes
-                    )
+                    self.ip_blocker.block_ip(ip=src_ip, reason=attack_type, severity=final_risk, duration=600)
 
-            if decision != "allow":
-                table_output.append(f"  🚨 {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | Engine(Density): {engine_rating:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
+            # Unified Terminal Report
+            if decision != "allow" or mitm_risk > 0.1:
+                table_output.append(f"  🚨 {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | MITM: {mitm_risk:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
 
         # Write to Database or CSV
         if logs_to_write:

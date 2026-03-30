@@ -19,9 +19,9 @@
         "global_ddos_max": 0.20
     },
     "hard_overrides": {
-        "syn_flood_pps": 800,
-        "syn_flood_min_ratio": 0.40,
-        "volume_legitimacy_pps": 600
+        "syn_flood_pps": 200,
+        "syn_flood_min_ratio": 0.25,
+        "volume_legitimacy_pps": 150
     },
     "ema": {
         "cold_start_alpha": 0.7,
@@ -37,8 +37,8 @@
         "penalty_low": 0.12
     },
     "zero_fp_refinement": {
-        "anomaly_signal_zero_multiplier": 0.75,
-        "legitimate_pattern_multiplier": 0.85,
+        "anomaly_signal_zero_multiplier": 0.85,
+        "legitimate_pattern_multiplier": 0.95,
         "stealth_pps_cap": 0.85,
         "pps_stealth_threshold": 5,
         "xgb_cold_threshold": 0.3,

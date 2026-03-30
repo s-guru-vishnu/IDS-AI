@@ -581,7 +581,7 @@ class DecisionEngine:
             decision = "alert"
             
         # =====================================================================
-        # STAGE 10: USER CONFIG - DUAL-RATING ATTACK DENSITY OVERRIDE
+        # STAGE 10: USER CONFIG - DUAL-RATING ATTACK DENSITY OVERRIDE (FIXED)
         # =====================================================================
         # 1. 'attack density' engine rating based on scaled PPS (e.g. max 150)
         engine_rating = min(pps / 150.0, 1.0)
@@ -589,16 +589,24 @@ class DecisionEngine:
         # 2. Extract AI model rating
         model_rating = xgb_score
         
-        # 3. Output as alert or block based on density
+        # 3. High-density volumetric override: block/alert by PPS alone when clearly flooding
         if engine_rating >= 0.8:
             decision = 'block'
-        elif engine_rating >= 0.4:
+        elif engine_rating >= 0.4 and model_rating >= 0.3:
             decision = 'alert'
-            
-        # 4. If either rating is low, DO NOT give any alert
-        if engine_rating < 0.3 or model_rating < 0.3:
+        
+        # 4. FIX: Only suppress to 'allow' when ALL three conditions agree there is no threat:
+        #    - PPS is low (engine_rating < 0.3)
+        #    - ML model has low confidence (model_rating < 0.3)
+        #    - The computed risk score is also below ALERT threshold
+        #    IMPORTANT: MITM-only, WAF, and anomaly-driven alerts must NOT be overridden
+        #    when actual_risk already indicates a threat, even at idle/low PPS.
+        mitm_active = (mitm_contribution > 0.3)
+        waf_active = waf_threat
+        risk_is_clear = actual_risk < self._threshold_allow
+        if engine_rating < 0.3 and model_rating < 0.3 and risk_is_clear and not mitm_active and not waf_active:
             decision = 'allow'
-            reasons.append(f"OVERRIDE: Allowed due to low ratings (Engine: {engine_rating:.2f}, Model: {model_rating:.2f})")
+            reasons.append(f"OVERRIDE: Allowed — all signals cold (Engine: {engine_rating:.2f}, Model: {model_rating:.2f}, Risk: {actual_risk:.2f})")
         else:
             if decision != 'allow':
                 reasons.append(f"Dual-Rating Action (Engine: {engine_rating:.2f}, Model: {model_rating:.2f})")
