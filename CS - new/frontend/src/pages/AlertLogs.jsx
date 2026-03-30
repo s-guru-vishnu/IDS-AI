@@ -66,14 +66,14 @@ export default function AlertLogs() {
 
       <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="table-container">
-            <table className="premium-table">
+            <table className="premium-table" style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', padding: '16px 20px' }}>Severity</th>
-                  <th style={{ textAlign: 'left', padding: '16px' }}>Threat Type & Source</th>
-                  <th style={{ textAlign: 'left', padding: '16px' }}>Detection Engine</th>
-                  <th style={{ textAlign: 'center', padding: '16px' }}>Risk %</th>
-                  <th style={{ textAlign: 'right', padding: '16px 20px' }}>Time Occurred</th>
+                  <th style={{ width: '15%', textAlign: 'left', padding: '16px 20px' }}>Severity</th>
+                  <th style={{ width: '35%', textAlign: 'left', padding: '16px' }}>Threat Type & Source</th>
+                  <th style={{ width: '20%', textAlign: 'left', padding: '16px' }}>Detection Engine</th>
+                  <th style={{ width: '15%', textAlign: 'center', padding: '16px' }}>Risk %</th>
+                  <th style={{ width: '15%', textAlign: 'right', padding: '16px 20px' }}>Time Occurred</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,7 +85,7 @@ export default function AlertLogs() {
                   return (
                     <tr key={idx} style={{ display: 'contents' }}>
                       <td colSpan="5" style={{ padding: 0 }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                           <tbody>
                             <tr 
                               onClick={() => toggleExpand(idx)}
@@ -112,7 +112,7 @@ export default function AlertLogs() {
                                    </div>
                                    <div>
                                       <div style={{ fontWeight: '800', fontSize: '13px', color: 'var(--text-primary)' }}>{alert.Attack_Type || alert.alert_type || 'Potential Infiltration'}</div>
-                                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>{alert.Source_IP || alert.source_ip || '0.0.0.0'}</div>
+                                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '2px' }}>{alert.Source_IP || alert.source_ip || '0.0.0.0'}</div>
                                    </div>
                                 </div>
                               </td>

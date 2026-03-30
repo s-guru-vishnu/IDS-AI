@@ -1,10 +1,57 @@
 {
-    "version": "V69",
+    "version": "V73-CyberDefenseAI",
     "decision_thresholds": {
         "allow_max": 0.3,
         "alert_max": 0.7,
         "throttle_max": 0.9,
-        "comment": "risk < allow_max = allow, < alert_max = alert, < throttle_max = throttle, >= throttle_max = block"
+        "comment": "risk < allow_max = allow/monitor, < alert_max = alert, < throttle_max = throttle, >= throttle_max = block/isolate"
+    },
+    "response_tiers": {
+        "monitor_max": 0.3,
+        "throttle_max": 0.6,
+        "block_max": 0.85,
+        "isolate_min": 0.85,
+        "comment": "ALLOW < MONITOR < THROTTLE < BLOCK < ISOLATE"
+    },
+    "ai_attack": {
+        "adversarial_threshold": 0.7,
+        "poisoning_threshold": 0.6,
+        "evasion_threshold": 0.65,
+        "extraction_threshold": 0.7,
+        "adaptive_threshold": 0.6,
+        "baseline_batches": 50
+    },
+    "stealth": {
+        "low_slow_window_hours": 1,
+        "mimicry_ks_threshold": 0.05,
+        "micro_traffic_aggregate_pps": 50,
+        "jitter_cv_threshold": 0.3
+    },
+    "zero_day": {
+        "z_threshold": 3.0,
+        "min_deviating_features": 3,
+        "anomaly_threshold": 0.75,
+        "learning_flows": 500,
+        "classification_confidence_min": 0.6
+    },
+    "correlation": {
+        "multi_flow_window_sec": 30,
+        "chain_timeout_sec": 300,
+        "distributed_min_ips": 3,
+        "distributed_min_aggregate_pps": 50,
+        "pulse_min_cycles": 3,
+        "micro_traffic_aggregate_pps": 30
+    },
+    "threat_intelligence": {
+        "geo_learning_limit": 1000,
+        "ttl_max_history": 10,
+        "reputation_stale_seconds": 3600
+    },
+    "pipeline": {
+        "cleanup_interval_flows": 200,
+        "alert_pps_threshold": 80,
+        "alert_syn_threshold": 0.15,
+        "block_pps_threshold": 200
     },
     "penalties": {
         "waf_threat": 0.35,
@@ -46,5 +93,15 @@
         "handshake_cold_threshold": 1.0,
         "mitm_cold_threshold": 0.1,
         "adaptive_cold_threshold": 1.0
+    },
+    "dynamic_baseline": {
+        "baseline_ema_alpha": 0.3,
+        "spike_ratio_threshold": 3.0,
+        "sustained_window_threshold": 3,
+        "min_baseline_pps": 5.0,
+        "max_baseline_pps": 500.0,
+        "engine_rating_divisor": 3.0,
+        "block_requires_syn_min": 0.2,
+        "block_requires_ml_min": 0.7
     }
 }

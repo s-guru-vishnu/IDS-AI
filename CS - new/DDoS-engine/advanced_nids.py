@@ -185,6 +185,8 @@ class AdvancedNIDSEngine:
             summary_data = []
 
             for ip, stats in current_window.items():
+                if ip == self.my_ip:
+                    continue
                 attack_vectors = []
                 final_severity = 0
 

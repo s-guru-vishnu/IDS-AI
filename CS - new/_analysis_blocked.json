@@ -1,0 +1,74 @@
+[
+  {
+    "Timestamp": "2026-03-30 18:43:46",
+    "Source_IP": "34.54.84.110",
+    "Dest_IP": "10.193.36.192",
+    "PPS": 10.0,
+    "MITM_Risk": 0.5928749999999999,
+    "ML_Risk": 0.225,
+    "Final_Risk": 0.9203,
+    "Decision": "BLOCK",
+    "Attack_Type": "MITM",
+    "Reasons": "AI-IDS Unified Evaluation (V71) | High MITM anomaly (ARP/TTL) | Dual-Rating Action (Engine: 0.07, Model: 0.04)"
+  },
+  {
+    "Timestamp": "2026-03-30 18:43:11",
+    "Source_IP": "34.54.84.110",
+    "Dest_IP": "10.193.36.192",
+    "PPS": 0.2,
+    "MITM_Risk": 0.6375,
+    "ML_Risk": 0.0,
+    "Final_Risk": 1.0,
+    "Decision": "BLOCK",
+    "Attack_Type": "DoS",
+    "Reasons": "Hard Attack Override: Critical DoS/SYN Flood"
+  },
+  {
+    "Timestamp": "2026-03-30 18:39:07",
+    "Source_IP": "107.167.96.38",
+    "Dest_IP": "10.193.36.192",
+    "PPS": 0.1,
+    "MITM_Risk": 0.0,
+    "ML_Risk": 0.0,
+    "Final_Risk": 1.0,
+    "Decision": "BLOCK",
+    "Attack_Type": "DoS",
+    "Reasons": "Hard Attack Override: Critical DoS/SYN Flood"
+  },
+  {
+    "Timestamp": "2026-03-30 18:39:07",
+    "Source_IP": "10.193.36.192",
+    "Dest_IP": "10.193.36.199",
+    "PPS": 0.7,
+    "MITM_Risk": 0.0,
+    "ML_Risk": 0.0,
+    "Final_Risk": 1.0,
+    "Decision": "BLOCK",
+    "Attack_Type": "DoS",
+    "Reasons": "Hard Attack Override: Critical DoS/SYN Flood"
+  },
+  {
+    "Timestamp": "2026-03-30 18:32:51",
+    "Source_IP": "3.233.158.50",
+    "Dest_IP": "10.193.36.192",
+    "PPS": 0.3,
+    "MITM_Risk": 0.0,
+    "ML_Risk": 0.0,
+    "Final_Risk": 1.0,
+    "Decision": "BLOCK",
+    "Attack_Type": "DoS",
+    "Reasons": "Hard Attack Override: Critical DoS/SYN Flood"
+  },
+  {
+    "Timestamp": "2026-03-30 18:32:51",
+    "Source_IP": "3.233.158.49",
+    "Dest_IP": "10.193.36.192",
+    "PPS": 0.3,
+    "MITM_Risk": 0.0,
+    "ML_Risk": 0.0,
+    "Final_Risk": 1.0,
+    "Decision": "BLOCK",
+    "Attack_Type": "DoS",
+    "Reasons": "Hard Attack Override: Critical DoS/SYN Flood"
+  }
+]

@@ -158,7 +158,7 @@ class RiskScoreConfig:
     weight_verified_gateway_change: float = 5.0
     weight_arp_flood: float = 30.0
     weight_stealth_spoof: float = 35.0
-    weight_behaviour_anomaly: float = 15.0
+    weight_behaviour_anomaly: float = 35.0
     weight_latency_drift: float = 25.0
     weight_duplicate_arp_reply: float = 20.0
     weight_gratuitous_arp: float = 15.0

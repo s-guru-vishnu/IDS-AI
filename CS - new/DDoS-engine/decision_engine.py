@@ -31,7 +31,7 @@ class DecisionEngine:
         self.gateway_ips = set(gateway_ips) if gateway_ips else set()  # V69: Actual gateway IPs
         self.recent_scores = [0.1] * 50 # Initial history
         self.eval_mode = eval_mode
-        self.version = "V71"
+        self.version = "V72"
         self.last_pps = {} # V70.2: per-IP
         self.last_risk = {} # V70.2: per-IP
         self.ema_alpha = 0.35 # V61: Risk Smoothing factor
@@ -39,6 +39,10 @@ class DecisionEngine:
         self.scan_history = {}  # V64: Tracks sustained scan counts per IP for escalation
         self._window_counts = {} # V70.2: per-IP
         self._scan_history_cleanup_counter = 0  # V69: Periodic cleanup tracker
+        
+        # V72: Dynamic per-IP PPS baseline tracking
+        self._pps_baselines = {}     # ip_key → EMA baseline PPS
+        self._sustained_counts = {}  # ip_key → consecutive spike windows
         
         # V69: Load thresholds from config (with defaults)
         cfg = _load_thresholds_config()
@@ -68,6 +72,17 @@ class DecisionEngine:
         self._mitm_cold = fp_cfg.get('mitm_cold_threshold', 0.1)
         self._adaptive_cold = fp_cfg.get('adaptive_cold_threshold', 1.0)
 
+        # V72: Dynamic baseline config
+        db_cfg = cfg.get('dynamic_baseline', {})
+        self._baseline_ema_alpha = db_cfg.get('baseline_ema_alpha', 0.3)
+        self._spike_ratio_threshold = db_cfg.get('spike_ratio_threshold', 3.0)
+        self._sustained_window_threshold = db_cfg.get('sustained_window_threshold', 3)
+        self._min_baseline_pps = db_cfg.get('min_baseline_pps', 5.0)
+        self._max_baseline_pps = db_cfg.get('max_baseline_pps', 500.0)
+        self._engine_rating_divisor = db_cfg.get('engine_rating_divisor', 3.0)
+        self._block_syn_min = db_cfg.get('block_requires_syn_min', 0.2)
+        self._block_ml_min = db_cfg.get('block_requires_ml_min', 0.7)
+
     def _is_high_traffic_festival(self, dt):
         """Check if date falls in high-traffic festival months (Oct, Nov, Jan)."""
         return dt.month in [1, 10, 11]
@@ -84,6 +99,59 @@ class DecisionEngine:
         if ip in self.block_history:
             return (time.time() - self.block_history[ip]) < cooldown
         return False
+
+    def _update_pps_baseline(self, ip_key, pps):
+        """
+        V72: Dynamic per-IP PPS Baseline using EMA.
+
+        Maintains a running baseline of 'normal' PPS for each IP address.
+        Spike traffic is absorbed at 10% speed to prevent attack packets
+        from inflating the baseline, while legitimate growth tracks at full alpha.
+
+        Returns:
+            pps_ratio (float): Current PPS / EMA baseline (1.0 = at baseline)
+            is_sustained (bool): True if spike persisted for N+ consecutive windows
+        """
+        alpha = self._baseline_ema_alpha
+
+        if ip_key not in self._pps_baselines:
+            # First observation: seed baseline (clamp to floor)
+            self._pps_baselines[ip_key] = max(pps, self._min_baseline_pps)
+            self._sustained_counts[ip_key] = 0
+            return 1.0, False  # First window is always 'at baseline'
+
+        baseline = self._pps_baselines[ip_key]
+        effective_baseline = max(baseline, self._min_baseline_pps)
+        pps_ratio = pps / effective_baseline
+
+        if pps_ratio < self._spike_ratio_threshold:
+            # Normal-range traffic: absorb at full alpha
+            self._pps_baselines[ip_key] = (1 - alpha) * baseline + alpha * pps
+            self._sustained_counts[ip_key] = max(
+                0, self._sustained_counts.get(ip_key, 0) - 1
+            )
+        else:
+            # Spike detected: slow absorption (10% of alpha) prevents
+            # attack traffic from inflating the baseline upward
+            slow_alpha = alpha * 0.1
+            self._pps_baselines[ip_key] = (
+                (1 - slow_alpha) * baseline + slow_alpha * pps
+            )
+            self._sustained_counts[ip_key] = (
+                self._sustained_counts.get(ip_key, 0) + 1
+            )
+
+        # Clamp baseline to operational range
+        self._pps_baselines[ip_key] = max(
+            min(self._pps_baselines[ip_key], self._max_baseline_pps),
+            self._min_baseline_pps,
+        )
+
+        is_sustained = (
+            self._sustained_counts.get(ip_key, 0)
+            >= self._sustained_window_threshold
+        )
+        return pps_ratio, is_sustained
 
 
     def evaluate(self, xgb_score, if_anomaly, ae_mse, ae_baseline, spike_zscore, timestamp=None, syn_ratio=0.0, pps=0.0, ip_address=None, dst_ip=None, byte_rate=0, connection_flag='SF', mitm_risk=0.0, unique_src_ips=1, burst_count=0, waf_threat=False, handshake_severity=0.0, adaptive_severity=0.0, global_pps=0.0, global_syn_count=0, global_scan_flag=False, slowloris_severity=0.0):
@@ -115,12 +183,15 @@ class DecisionEngine:
         TRUSTED_EXTERNALS = ["34.54.84.110"]
         external_relief = 0.3 if dst_ip in TRUSTED_EXTERNALS else 0.0
 
+        # V72: Define ip_key early (needed by dynamic baseline and all downstream stages)
+        ip_key = ip_address if ip_address else "Unknown"
+
         # =====================================================================
         # STAGE 2: HARD VOLUMETRIC OVERRIDES (Early Returns)
         # =====================================================================
         # V58 Calibration: Overrides for extreme volumetric levels (>200 PPS)
+        # NOTE: These are SYN-gated — raw PPS alone NEVER triggers hard override
         if (pps >= self._syn_flood_pps and syn_ratio >= 0.25) or (pps >= 180 and syn_ratio > 0.7) or syn_ratio > 0.95:
-             ip_key = ip_address if ip_address else "Unknown"
              self.last_pps[ip_key] = pps
              self.last_risk[ip_key] = 1.0
              if ip_address:
@@ -134,24 +205,38 @@ class DecisionEngine:
 
         # =====================================================================
         # STAGE 3: DETERMINISTIC CORE CALCULATION
-        # V70.2: PPS risk gated by SYN ratio to prevent Festival FPs
+        # V72: PPS risk uses dynamic per-IP EMA baseline ratio (not raw PPS / constant)
+        #   pps_ratio = current_PPS / EMA_baseline  (1.0 = at baseline, 3.0 = 3x spike)
+        #   Eliminates false positives from CDN, streaming, and flash-crowd traffic
+        #   because high-PPS sources build a proportionally high baseline.
         # =====================================================================
+        pps_ratio, is_sustained_spike = self._update_pps_baseline(ip_key, pps)
+
         total_risk = 0.0
         if syn_ratio >= 0.15:
-            # Attack-like SYN ratio: full PPS contribution
-            total_risk += min(pps / 150, 1.0) * 0.7
+            # Attack-like SYN ratio: full PPS-ratio contribution
+            total_risk += min(pps_ratio / self._engine_rating_divisor, 1.0) * 0.7
         elif syn_ratio >= 0.05:
-            # Moderate SYN: reduced PPS contribution
-            total_risk += min(pps / 200, 1.0) * 0.35
+            # Moderate SYN: reduced PPS-ratio contribution
+            total_risk += min(pps_ratio / (self._engine_rating_divisor + 1.0), 1.0) * 0.35
         else:
-            # Clean traffic (low SYN): minimal PPS contribution
-            total_risk += min(pps / 300, 1.0) * 0.15
+            # Clean traffic (low SYN): minimal PPS-ratio contribution
+            total_risk += min(pps_ratio / (self._engine_rating_divisor * 2.0), 1.0) * 0.15
         total_risk += syn_ratio * 1.0
+
+        # V72: Sustained spike escalation (only with SYN corroboration)
+        if is_sustained_spike and syn_ratio >= 0.10:
+            sustained_windows = self._sustained_counts.get(ip_key, 0)
+            escalation = min(sustained_windows * 0.05, 0.20)
+            total_risk += escalation
+            reasons.append(
+                f"Sustained spike: {sustained_windows} windows above baseline "
+                f"(ratio={pps_ratio:.1f}x)"
+            )
         
         # =====================================================================
         # STAGE 4: SIGNAL PENALTIES
         # =====================================================================
-        ip_key = ip_address if ip_address else "Unknown"
         l_risk = self.last_risk.get(ip_key, 0.0)
         l_pps = self.last_pps.get(ip_key, 0.0)
 
@@ -248,8 +333,8 @@ class DecisionEngine:
             reasons.append(f"Global DDoS: aggregate {global_pps:.0f} PPS across {unique_src_ips} sources")
 
         # V69 Fix 1: Global SYN count tracking (distributed low-rate DDoS)
-        # Detects coordinated SYN patterns independent of per-IP syn_ratio
-        if global_syn_count > self._global_syn_threshold and unique_src_ips > self._global_syn_min_ips:
+        # Detects coordinated SYN patterns, but we MUST ensure the current IP actually sent a SYN packet (syn_ratio > 0).
+        if global_syn_count > self._global_syn_threshold and unique_src_ips > self._global_syn_min_ips and syn_ratio > 0.0:
             if global_syn_count >= 50:
                 total_risk += 0.55  # V70.2: Ultimate boost for 13/13 score
                 reasons.append(f"Distributed SYN: {global_syn_count} aggregate SYN packets")
@@ -460,8 +545,9 @@ class DecisionEngine:
                 for ip, _ in sorted_ips[:len(sorted_ips) - 2500]:
                     del self.scan_history[ip]
 
-            # V71 Fix D1: LRU eviction for last_pps / last_risk (keep 5000 most recent)
-            for d in (self.last_pps, self.last_risk, self._window_counts):
+            # V72: LRU eviction for all per-IP state dicts (keep 5000 most recent)
+            for d in (self.last_pps, self.last_risk, self._window_counts,
+                      self._pps_baselines, self._sustained_counts):
                 if len(d) > 5000:
                     # Keep the 2500 entries with highest values (most recently active)
                     sorted_entries = sorted(d.items(), key=lambda x: x[1])
@@ -581,26 +667,55 @@ class DecisionEngine:
             decision = "alert"
             
         # =====================================================================
-        # STAGE 10: USER CONFIG - DUAL-RATING ATTACK DENSITY OVERRIDE (FIXED)
+        # STAGE 10: DUAL-RATING ATTACK DENSITY OVERRIDE (V72 — Dynamic Baseline)
         # =====================================================================
-        # 1. 'attack density' engine rating based on scaled PPS (e.g. max 150)
-        engine_rating = min(pps / 150.0, 1.0)
+        # V72: Engine rating uses dynamic PPS ratio against per-IP EMA baseline.
+        #   pps_ratio 1.0 = at baseline → engine_rating ~0.33 (calm)
+        #   pps_ratio 3.0 = 3x baseline → engine_rating 1.0  (max concern)
+        #   This ensures CDN/streaming IPs with high but stable PPS stay at low
+        #   engine_rating, while genuine spikes relative to each IP's norm trigger.
+        engine_rating = min(pps_ratio / self._engine_rating_divisor, 1.0)
         
         # 2. Extract AI model rating
         model_rating = xgb_score
         
-        # 3. High-density volumetric override: block/alert by PPS alone when clearly flooding
+        # 3. V72: High-density override — BLOCK requires corroborating threat signal.
+        #    Raw volume alone (CDN, streaming, flash crowds) is NEVER sufficient for BLOCK.
+        #    This is the critical fix: PPS >= 120 no longer auto-blocks.
         if engine_rating >= 0.8:
-            decision = 'block'
+            has_attack_signature = (
+                syn_ratio > self._block_syn_min
+                or model_rating > self._block_ml_min
+                or waf_threat
+                or mitm_contribution > 0.5
+            )
+            if has_attack_signature:
+                decision = 'block'
+                reasons.append(
+                    f"Dual-Rating BLOCK: Volume ({engine_rating:.2f}) + Attack Signal "
+                    f"(SYN:{syn_ratio:.2f}, ML:{model_rating:.2f})"
+                )
+            elif is_sustained_spike:
+                # Sustained high volume without attack signature → throttle, not block
+                decision = 'throttle'
+                reasons.append(
+                    f"Dual-Rating THROTTLE: Sustained volume without attack signature "
+                    f"(E:{engine_rating:.2f}, "
+                    f"{self._sustained_counts.get(ip_key, 0)} windows)"
+                )
+            else:
+                # Short spike (1-2 windows) with no threat: demote to alert
+                if actual_risk >= self._threshold_allow:
+                    decision = 'alert'
+                    reasons.append(
+                        f"Dual-Rating ALERT: Volume spike without threat confirmation "
+                        f"(E:{engine_rating:.2f}, ratio={pps_ratio:.1f}x)"
+                    )
         elif engine_rating >= 0.4 and model_rating >= 0.3:
             decision = 'alert'
         
-        # 4. FIX: Only suppress to 'allow' when ALL three conditions agree there is no threat:
-        #    - PPS is low (engine_rating < 0.3)
-        #    - ML model has low confidence (model_rating < 0.3)
-        #    - The computed risk score is also below ALERT threshold
-        #    IMPORTANT: MITM-only, WAF, and anomaly-driven alerts must NOT be overridden
-        #    when actual_risk already indicates a threat, even at idle/low PPS.
+        # 4. Safety: suppress to ALLOW only when ALL signals agree there is no threat.
+        #    MITM-only, WAF, and anomaly-driven alerts must NOT be overridden.
         mitm_active = (mitm_contribution > 0.3)
         waf_active = waf_threat
         risk_is_clear = actual_risk < self._threshold_allow
@@ -651,9 +766,9 @@ class DecisionEngine:
             # 5. Distributed_SYN: Global SYN without per-IP volume
             elif global_syn_count > self._global_syn_threshold and unique_src_ips > self._global_syn_min_ips:
                 attack_type = "Distributed_SYN"
-            # 6. Scan: Non-SF flags at low-to-moderate PPS (check BEFORE DoS)
+            # 6. Scan: Non-SF flags with at least moderate PPS (check BEFORE DoS)
             #    V71: Added pps < 80 guard so high-rate attacks go to DoS instead
-            elif connection_flag != 'SF' and pps < 80:
+            elif connection_flag != 'SF' and pps > 5 and pps < 80:
                 attack_type = "Scan"
             # 7. DoS: High SYN ratio required (prevents festival misclassification)
             elif (syn_ratio > 0.3 and pps > 30) or (pps > 80 and syn_ratio > 0.15):
@@ -671,6 +786,8 @@ class DecisionEngine:
             'mitm_risk': round(mitm_contribution, 3),
             'engine_rating': round(engine_rating, 3),
             'model_rating': round(model_rating, 3),
+            'pps_ratio': round(pps_ratio, 2),
+            'pps_baseline': round(self._pps_baselines.get(ip_key, 0), 1),
             'reason': reasons_out,
             'attack_type': attack_type
         }

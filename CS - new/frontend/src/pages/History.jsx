@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { fetchAPI } from '../utils/IDS_API'
 
 export default function History() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialDecision = searchParams.get('decision') || 'all'
+  
   const [logs, setLogs] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -9,12 +13,23 @@ export default function History() {
   const [filters, setFilters] = useState({
       source_ip: '',
       attack_type: 'all',
-      decision: 'all'
+      decision: initialDecision === 'any' ? 'all' : initialDecision
   })
 
   useEffect(() => {
     loadHistory()
   }, [page, filters])
+
+  // Sync state back to URL if it changes via UI
+  useEffect(() => {
+    const newParams = new URLSearchParams(searchParams)
+    if (filters.decision === 'all') {
+      newParams.set('decision', 'any')
+    } else {
+      newParams.set('decision', filters.decision)
+    }
+    setSearchParams(newParams, { replace: true })
+  }, [filters.decision])
 
   async function loadHistory() {
     setLoading(true)
@@ -47,10 +62,10 @@ export default function History() {
               <label style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '800', display: 'block', marginBottom: '4px' }}>Filter by Source IP</label>
               <input 
                 type="text" 
-                placeholder="192.168..." 
+                placeholder="Enter the IP Address" 
                 value={filters.source_ip}
                 onChange={(e) => setFilters({...filters, source_ip: e.target.value})}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '8px 12px', color: 'white', outline: 'none' }}
+                style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '8px 12px', color: 'var(--text-primary)', outline: 'none' }}
               />
           </div>
           <div>
@@ -58,7 +73,7 @@ export default function History() {
               <select 
                 value={filters.decision}
                 onChange={(e) => setFilters({...filters, decision: e.target.value})}
-                style={{ background: '#1a2236', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '8px 12px', color: 'white' }}
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '8px 12px', color: 'var(--text-primary)', outline: 'none' }}
               >
                   <option value="all">ANY</option>
                   <option value="BLOCK">BLOCK</option>
@@ -66,12 +81,7 @@ export default function History() {
                   <option value="ALERT">ALERT</option>
               </select>
           </div>
-          <button 
-                onClick={() => { setFilters({ source_ip: '', attack_type: 'all', decision: 'all' }); setPage(1); }}
-                style={{ marginTop: '18px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}
-          >
-              RESET
-          </button>
+          
       </div>
 
       <div className="dash-card">
@@ -94,7 +104,7 @@ export default function History() {
                 <td>{log.Dest_IP}</td>
                 <td style={{ color: log.Attack_Type !== 'Normal' ? '#ef4444' : 'var(--accent-green)', fontWeight: '700' }}>{log.Attack_Type}</td>
                 <td><span className={`badge-premium ${log.Decision === 'BLOCK' ? 'badge-block' : 'badge-allow'}`}>{log.Decision}</span></td>
-                <td style={{ fontFamily: 'JetBrains Mono', fontWeight: '800' }}>{(log.Final_Risk * 100).toFixed(0)}%</td>
+                <td style={{ fontWeight: '800' }}>{(log.Final_Risk * 100).toFixed(0)}%</td>
               </tr>
             ))}
           </tbody>

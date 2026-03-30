@@ -1,42 +1,41 @@
 import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { fetchAPI, getAttackColor } from '../utils/IDS_API'
 
 export default function AttackTypes() {
+  const { type: urlType } = useParams()
+  const navigate = useNavigate()
   const [types, setTypes] = useState([])
-  const [selectedType, setSelectedType] = useState(null)
   const [drilldown, setDrilldown] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadSummary()
-  }, [])
+    loadData()
+  }, [urlType])
 
-  async function loadSummary() {
+  async function loadData() {
     setLoading(true)
     try {
-      const data = await fetchAPI('/attack-types')
-      setTypes(data.attack_types || [])
+      if (urlType) {
+        // Load specific drilldown
+        const data = await fetchAPI(`/attack-types?type=${urlType}`)
+        setDrilldown(data)
+      } else {
+        // Load summary list
+        const data = await fetchAPI('/attack-types')
+        setTypes(data.attack_types || [])
+        setDrilldown(null)
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  async function loadDrilldown(type) {
-    setSelectedType(type)
-    setLoading(true)
-    try {
-      const data = await fetchAPI(`/attack-types?type=${type}`)
-      setDrilldown(data)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading && !selectedType) return <div style={{ padding: '100px', textAlign: 'center', fontWeight: '800', letterSpacing: '2px' }}>ANALYZING ATTACK VECTORS...</div>
+  if (loading && !urlType) return <div style={{ padding: '100px', textAlign: 'center', fontWeight: '800', letterSpacing: '2px' }}>ANALYZING ATTACK VECTORS...</div>
 
   return (
     <div className="animate-in">
-      {!selectedType ? (
+      {!urlType ? (
         <>
           <div className="page-intro">
             <div>
@@ -49,7 +48,7 @@ export default function AttackTypes() {
             {types.map((t, i) => {
               const theme = getAttackColor(t.attack_type);
               return (
-                <div key={i} className="dash-card dash-card-mesh" style={{ cursor: 'pointer', borderLeft: `4px solid ${theme.color}` }} onClick={() => loadDrilldown(t.attack_type)}>
+                <div key={i} className="dash-card dash-card-mesh" style={{ cursor: 'pointer', borderLeft: `4px solid ${theme.color}` }} onClick={() => navigate(`/attack-types/${t.attack_type}`)}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>{t.attack_type}</div>
@@ -75,12 +74,25 @@ export default function AttackTypes() {
         <>
           <div className="page-intro">
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <button onClick={() => setSelectedType(null)} className="dash-card" style={{ padding: '12px 20px', border: 'none', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: '12px', fontWeight: '800', cursor: 'pointer' }}>
-                  ← BACK TO LIST
+                <button 
+                  onClick={() => navigate('/attack-types')} 
+                  className="interactive-card hover-glow"
+                  style={{ 
+                    padding: '10px 16px', border: '1px solid var(--border-color)', 
+                    background: 'var(--bg-surface)', color: 'var(--text-primary)', 
+                    fontSize: '11px', fontWeight: '800', cursor: 'pointer', borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', gap: '8px'
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  BACK
                 </button>
                 <div>
-                    <h2>{selectedType} Deep-Dive</h2>
-                    <p>Granular forensic analysis for the {selectedType} threat vector.</p>
+                    <h2>{urlType} Deep-Dive</h2>
+                    <p>Granular forensic analysis for the {urlType} threat vector.</p>
                 </div>
             </div>
           </div>

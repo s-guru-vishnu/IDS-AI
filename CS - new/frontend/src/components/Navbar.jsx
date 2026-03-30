@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-
 const navItems = [
   { path: '/', label: 'Overview' },
   { path: '/live-logs', label: 'Live Logs' },
@@ -32,6 +31,12 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
+  ),
+  User: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
   )
 }
 
@@ -54,9 +59,9 @@ export default function Navbar() {
           <div className="logo-badge" style={{ background: 'var(--accent-red)' }}>
             <Icons.Shield />
           </div>
-          <div className="logo-text">
-            <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800' }}>AI-IDS</h1>
-            <span style={{ fontSize: '9px', fontWeight: '700', opacity: 0.6 }}>STEALTH SECURITY SYSTEMS</span>
+          <div className="logo-text" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h1 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>AI-IDS</h1>
+            <span style={{ margin: 0, fontSize: '9px', fontWeight: '700', opacity: 0.6, letterSpacing: '1px' }}>STEALTH SECURITY SYSTEMS</span>
           </div>
         </div>
 
@@ -98,13 +103,21 @@ export default function Navbar() {
           }}
           onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(15deg)'}
           onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
-        >
+          >
           {theme === 'light' ? <Icons.Moon /> : <Icons.Sun />}
         </button>
 
-        <div style={{ padding: '8px', cursor: 'pointer', color: 'var(--text-muted)' }}>
-            <Icons.Settings />
-        </div>
+        <NavLink 
+          to="/profile/u/me"
+          style={({ isActive }) => ({ 
+             padding: '8px', cursor: 'pointer', transition: 'color 0.2s',
+             color: isActive ? 'var(--text-primary)' : 'var(--text-muted)'
+          })}
+          onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseOut={(e) => { if (!e.currentTarget.classList.contains('active')) e.currentTarget.style.color = 'var(--text-muted)' }}
+        >   
+            <Icons.User />
+        </NavLink>
       </div>
     </header>
   )

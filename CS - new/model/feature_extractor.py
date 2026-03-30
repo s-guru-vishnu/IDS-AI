@@ -137,11 +137,20 @@ class FeatureExtractor:
             port_mode = df['dst_port'].mode()
             mode_port = port_mode.iloc[0] if not port_mode.empty else 0
 
-        mode_flags = ""
+        mode_src_port = 0
+        if 'src_port' in df.columns:
+            src_port_mode = df['src_port'].mode()
+            mode_src_port = src_port_mode.iloc[0] if not src_port_mode.empty else 0
+
+        features['protocol'] = mode_proto
+        features['src_port'] = mode_src_port
+        features['dst_port'] = mode_port
+        
+        mode_flags = "NONE"
         if 'flags' in df.columns:
             flags_mode = df['flags'].mode()
-            mode_flags = flags_mode.iloc[0] if not flags_mode.empty else ""
-
+            mode_flags = flags_mode.iloc[0] if not flags_mode.empty else "NONE"
+            
         features['session_pattern'] = f"{mode_proto}-{mode_port}-{mode_flags}"
 
         # EXTREMELY CRITICAL: Schema Alignment for V19 (30 Columns)
@@ -153,7 +162,7 @@ class FeatureExtractor:
             'fin_flag_ratio', 'rst_flag_ratio', 'unique_src_ips', 'unique_dst_ips',
             'unique_src_ports', 'unique_dst_ports', 'pkts_per_src_ip', 'iat_mean',
             'iat_std', 'burst_count', 'connection_duration', 'timestamp',
-            'src_ip', 'dst_ip', 'user_agent', 'session_pattern'
+            'protocol', 'src_ip', 'dst_ip', 'src_port', 'dst_port', 'user_agent', 'session_pattern'
         ]
         
         # Build ordered dict

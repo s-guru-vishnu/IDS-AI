@@ -25,7 +25,9 @@ from advanced_nids import AdvancedNIDSEngine
 from package_analyser import TrafficAnalyser
 from ip_blocker import IPBlocker
 import joblib
+import json
 from groq_explainer import explain_alert
+from security_pipeline import SecurityPipeline
 
 # MongoDB Logging
 from mongo_logger import setup_mongo_logging
@@ -72,6 +74,9 @@ class Batch10sPipeline:
         self.advanced_ddos_engine = AdvancedNIDSEngine()
         self.traffic_analyser = TrafficAnalyser(debug=False)
 
+        # 3.5. Cyber Defense AI — 10-Layer Flow-Based Security Pipeline V3
+        self.security_pipeline = SecurityPipeline()
+
         # 4. IP Blocker (OS-level firewall integration)
         self.ip_blocker = None  # Initialized after DB setup in _init_db()
 
@@ -83,6 +88,7 @@ class Batch10sPipeline:
         self.extractor = FeatureExtractor(self.dummy_q1, self.dummy_q2, window_size_sec=self.batch_duration)
         
         self.csv_log_file = os.path.join(os.path.dirname(__file__), "stimulater", "batch_10s_logs.csv")
+        self.local_ip = self._get_local_ip()
         self._init_db()
 
     def _init_db(self):
@@ -95,6 +101,7 @@ class Batch10sPipeline:
             self.db = self.mongo_client["IDS"]
             self.collection = self.db["batch_logs"]
             self.blocked_collection = self.db["blocked_alerts"]
+            self.pipeline_collection = self.db["pipeline_results"]
             self.use_mongo = True
         except ImportError:
             print("pymongo not installed, falling back to CSV.")
@@ -234,7 +241,11 @@ class Batch10sPipeline:
                 }
                 if scapy.TCP in pkt:
                     info['flags'] = pkt[scapy.TCP].flags
+                    info['src_port'] = pkt[scapy.TCP].sport
                     info['dst_port'] = pkt[scapy.TCP].dport
+                elif scapy.UDP in pkt:
+                    info['src_port'] = pkt[scapy.UDP].sport
+                    info['dst_port'] = pkt[scapy.UDP].dport
                 valid_pkts.append(info)
                 
         if not valid_pkts:
@@ -297,6 +308,8 @@ class Batch10sPipeline:
         unique_ips = len(all_active_ips)
 
         for src_ip in all_active_ips:
+            if src_ip == self.local_ip:
+                continue
             # Try to get row from df_features
             rows = df_features[df_features['src_ip'] == src_ip] if not df_features.empty else pd.DataFrame()
             
@@ -348,13 +361,66 @@ class Batch10sPipeline:
             attack_type = result.get('attack_type', 'Normal')
             reasons = " | ".join(result.get('reason', []))
 
-            log_row = [batch_time, src_ip, dst_ip, round(pps, 1), round(mitm_risk, 2), round(ml_risk, 2), round(final_risk, 2), decision.upper(), attack_type, reasons]
+            # ═════════════════════════════════════════════════════════
+            # 🛡️ CYBER DEFENSE AI — 10-Layer Flow-Based Security Pipeline V3
+            # ═════════════════════════════════════════════════════════
+            features_dict = {}
+            if not rows.empty:
+                for col in rows.columns:
+                    try:
+                        features_dict[col] = float(row.get(col, 0))
+                    except (TypeError, ValueError):
+                        pass
+
+            # Extract src_port and dst_port for 5-tuple flow key
+            pkt_src_port = 0
+            pkt_dst_port = 0
+            pkt_protocol = "TCP"
+            if not rows.empty:
+                pkt_dst_port = int(row.get('dst_port', 0)) if 'dst_port' in row.index else 0
+                pkt_src_port = int(row.get('src_port', 0)) if 'src_port' in row.index else 0
+                pkt_protocol = str(row.get('protocol', 'TCP')) if 'protocol' in row.index else 'TCP'
+
+            pipeline_result = self.security_pipeline.process_flow(
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                features=features_dict,
+                xgb_score=xgb_score / 100.0,
+                if_anomaly=if_anomaly,
+                decision_engine_result=result,
+                mitm_risk=mitm_risk,
+                pps=pps,
+                syn_ratio=syn_ratio,
+                protocol=pkt_protocol,
+                src_port=pkt_src_port,
+                dst_port=pkt_dst_port,
+                was_recently_blocked=(self.ip_blocker.is_blocked(src_ip) if self.ip_blocker else False),
+            )
+
+            # Use pipeline output for final decision
+            pipeline_action = pipeline_result.action
+            pipeline_attack = pipeline_result.attack_type
+            pipeline_risk = pipeline_result.timing.total_detection_time_ms
+
+            log_row = [batch_time, src_ip, dst_ip, round(pps, 1), round(mitm_risk, 2), round(ml_risk, 2), round(final_risk, 2), pipeline_action, pipeline_attack, reasons]
             logs_to_write.append(log_row)
 
-            # 🔒 FIREWALL BLOCK
-            if decision == "block":
+            # Log strict JSON pipeline output to MongoDB
+            if getattr(self, "use_mongo", False):
+                try:
+                    pipeline_doc = pipeline_result.to_extended_dict()
+                    pipeline_doc["Timestamp"] = batch_time
+                    pipeline_doc["batch_id"] = batch_time
+                    self.pipeline_collection.insert_one(pipeline_doc)
+                except Exception as e:
+                    pass  # Non-blocking
+
+            # 🔒 FIREWALL BLOCK / ISOLATE
+            effective_decision = pipeline_action.lower()
+            if effective_decision in ("block", "isolate"):
                 if self.ip_blocker and not self.ip_blocker.is_blocked(src_ip):
-                    self.ip_blocker.block_ip(ip=src_ip, reason=attack_type, severity=final_risk, duration=600)
+                    block_duration = 1200 if effective_decision == "isolate" else 600
+                    self.ip_blocker.block_ip(ip=src_ip, reason=pipeline_attack, severity=final_risk, duration=block_duration)
                 
                 # 🛡️ DEDICATED BLOCKED DATA LOGGING
                 if getattr(self, "use_mongo", False):
@@ -366,25 +432,36 @@ class Batch10sPipeline:
                         "MITM_Risk": mitm_risk,
                         "ML_Risk": ml_risk,
                         "Final_Risk": final_risk,
-                        "Decision": "BLOCK",
-                        "Attack_Type": attack_type,
-                        "Reasons": reasons
+                        "Decision": pipeline_action,
+                        "Attack_Type": pipeline_attack,
+                        "Reasons": reasons,
+                        "anomaly_score": pipeline_result.anomaly_score,
+                        "is_zero_day": pipeline_result.is_zero_day,
+                        "confidence": pipeline_result.confidence,
+                        "risk_level": pipeline_result.risk_level,
+                        "pipeline_timing_ms": pipeline_result.timing.total_response_time_ms,
                     })
 
-            # Unified Terminal Report
-            if decision != "allow" or mitm_risk > 0.1:
-                icon = "🚨" if decision != "allow" else "🔔"
-                table_output.append(f"  {icon} {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | MITM: {mitm_risk:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
+            # Unified Terminal Report (with pipeline timing)
+            if effective_decision != "allow" or mitm_risk > 0.1:
+                icon = "🚨" if effective_decision in ("block", "isolate") else ("⚠️" if effective_decision == "throttle" else "🔔")
+                timing_str = f"{pipeline_result.timing.total_response_time_ms:.2f}ms"
+                zd_flag = " 🔴ZD" if pipeline_result.is_zero_day else ""
+                table_output.append(
+                    f"  {icon} {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | "
+                    f"Risk: {pipeline_result.risk_level:<8} | Action: {pipeline_action:<8} | "
+                    f"Type: {pipeline_attack:<16} | ⏱️{timing_str}{zd_flag}"
+                )
                 # 🧠 XAI: Non-blocking Groq explanation for every meaningful alert
                 explain_alert(
                     src_ip=src_ip, dst_ip=dst_ip, pps=pps,
                     mitm_risk=mitm_risk, ml_risk=ml_risk,
-                    final_risk=final_risk, decision=decision,
-                    attack_type=attack_type,
+                    final_risk=final_risk, decision=effective_decision,
+                    attack_type=pipeline_attack,
                     reasons=result.get('reason', []),
                     mongo_collection=self.collection if getattr(self, "use_mongo", False) else None,
                     query={"Source_IP": src_ip, "Timestamp": batch_time},
-                    secondary_collection=self.blocked_collection if (decision == "block" and getattr(self, "use_mongo", False)) else None
+                    secondary_collection=self.blocked_collection if (effective_decision in ("block", "isolate") and getattr(self, "use_mongo", False)) else None
                 )
 
         # Write to Database or CSV
@@ -415,9 +492,12 @@ class Batch10sPipeline:
 
         # Print Terminal Output
         if table_output:
-            print("  --- 10-SECOND THREAT REPORT ---")
+            stats = self.security_pipeline.get_pipeline_stats()
+            avg_ms = stats.get('avg_total_response_ms', 0)
+            print(f"  ╔══ 10-SECOND THREAT REPORT ══╗  Pipeline: {stats['total_flows_processed']} flows | Avg: {avg_ms:.3f}ms")
             for line in table_output:
                 print(line)
+            print(f"  ╚══════════════════════════════╝")
         else:
             print(f"  ✅ No threats detected in {unique_ips} active IPs.")
 

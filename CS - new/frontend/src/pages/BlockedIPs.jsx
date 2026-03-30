@@ -7,6 +7,7 @@ export default function BlockedIPs() {
   const [fwStats, setFwStats] = useState({ active_count: 0, expired_count: 0, total: 0 })
   const [loading, setLoading] = useState(true)
   const [unblocking, setUnblocking] = useState(null) // IP currently being unblocked
+  const [modalConfig, setModalConfig] = useState(null) // { type: 'alert' | 'confirm', ip?: string, message: string }
 
   const loadData = useCallback(() => {
     Promise.all([
@@ -27,8 +28,17 @@ export default function BlockedIPs() {
     return () => clearInterval(interval)
   }, [loadData])
 
-  const handleUnblock = async (ip) => {
-    if (!window.confirm(`Are you sure you want to unblock ${ip}? This will remove the firewall rule immediately.`)) return
+  const handleUnblock = (ip) => {
+    setModalConfig({ 
+      type: 'confirm', 
+      ip, 
+      message: `Are you sure you want to unblock ${ip}? This will remove the firewall rule immediately.` 
+    })
+  }
+
+  const confirmUnblock = async () => {
+    const ip = modalConfig.ip
+    setModalConfig(null)
     setUnblocking(ip)
     try {
       const res = await fetch(`${API_BASE}/unblock-ip`, {
@@ -37,13 +47,13 @@ export default function BlockedIPs() {
         body: JSON.stringify({ ip })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.success || data.message) {
         loadData() // Refresh
       } else {
-        alert(data.error || 'Unblock failed')
+        setModalConfig({ type: 'alert', message: data.error || 'Unblock failed' })
       }
     } catch (err) {
-      alert('Unblock request failed: ' + err.message)
+      setModalConfig({ type: 'alert', message: 'Unblock request failed: ' + err.message })
     }
     setUnblocking(null)
   }
@@ -70,16 +80,11 @@ export default function BlockedIPs() {
       <div className="dash-card" style={{ marginBottom: '28px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '10px',
-              background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(220, 38, 38, 0.05))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
-            }}>🔒</div>
             <div>
               <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, letterSpacing: '0.5px' }}>
                 FIREWALL BLOCKS
               </h3>
-              <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>
+              <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: 'var(--text-muted)' }}>
                 OS-level firewall rules • Auto-expires after 10 minutes
               </p>
             </div>
@@ -118,7 +123,7 @@ export default function BlockedIPs() {
               const isActive = block.status === 'ACTIVE'
               return (
                 <tr key={i} style={{ opacity: isActive ? 1 : 0.5 }}>
-                  <td style={{ fontWeight: 800, color: isActive ? 'var(--accent-red)' : 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
+                  <td style={{ fontWeight: 800, color: isActive ? 'var(--accent-red)' : 'var(--text-muted)' }}>
                     {block.ip}
                   </td>
                   <td>
@@ -127,7 +132,7 @@ export default function BlockedIPs() {
                       background: 'rgba(220, 38, 38, 0.08)', color: '#ef4444'
                     }}>{block.reason}</span>
                   </td>
-                  <td style={{ fontFamily: 'JetBrains Mono', fontWeight: 800 }}>
+                  <td style={{ fontWeight: 800 }}>
                     {(block.severity * 100).toFixed(0)}%
                   </td>
                   <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -136,7 +141,7 @@ export default function BlockedIPs() {
                   <td>
                     {isActive ? (
                       <span style={{
-                        fontFamily: 'JetBrains Mono', fontWeight: 800, fontSize: '12px',
+                        fontWeight: 800, fontSize: '12px',
                         color: '#dc2626', padding: '3px 8px', borderRadius: '4px',
                         background: 'rgba(220, 38, 38, 0.08)',
                         animation: 'pulse 2s infinite'
@@ -195,16 +200,11 @@ export default function BlockedIPs() {
       {/* ═══════ DECISION ENGINE BLOCKS — Historical block records ═══════ */}
       <div className="dash-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(124, 58, 237, 0.05))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
-          }}>📋</div>
           <div>
             <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, letterSpacing: '0.5px' }}>
               BLOCK HISTORY
             </h3>
-            <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>
+            <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: 'var(--text-muted)' }}>
               All IPs flagged by the Decision Engine for blocking
             </p>
           </div>
@@ -227,7 +227,7 @@ export default function BlockedIPs() {
                 <td style={{ fontWeight: '800', color: 'var(--accent-red)' }}>{item.source_ip}</td>
                 <td><span className="badge-premium" style={{ background: 'var(--accent-red-soft)', color: 'var(--accent-red)' }}>{item.block_count} EVENTS</span></td>
                 <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.last_blocked}</td>
-                <td style={{ fontFamily: 'JetBrains Mono', fontWeight: '800' }}>{(item.avg_risk * 100).toFixed(0)}%</td>
+                <td style={{ fontWeight: '800' }}>{(item.avg_risk * 100).toFixed(0)}%</td>
                 <td>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                         {item.reasons?.map((r, idx) => (
@@ -247,6 +247,36 @@ export default function BlockedIPs() {
         </table>
         {blocked.length === 0 && <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>No blacklisted entities found. Perimeter secure.</div>}
       </div>
+
+      {/* EXCLUSIVE CUSTOM NOTIFICATION MODAL */}
+      {modalConfig && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', maxWidth: '400px', width: '90%', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {modalConfig.type === 'confirm' ? '⚠️ Confirm Action' : '🚨 Alert'}
+            </h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              {modalConfig.message}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              {modalConfig.type === 'confirm' && (
+                <button 
+                  onClick={() => setModalConfig(null)}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
+                >
+                  CANCEL
+                </button>
+              )}
+              <button 
+                onClick={modalConfig.type === 'confirm' ? confirmUnblock : () => setModalConfig(null)}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: modalConfig.type === 'confirm' ? 'var(--accent-red)' : 'var(--accent-blue)', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
+              >
+                {modalConfig.type === 'confirm' ? 'UNBLOCK IP' : 'OKAY'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

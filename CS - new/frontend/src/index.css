@@ -73,6 +73,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: inherit;
 }
 
 body {
@@ -81,6 +82,14 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+input, button, select, textarea {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: inherit;
+  color: inherit;
 }
 
 /* ═══════════════ TOP NAVBAR ═══════════════ */
@@ -512,3 +521,31 @@ body {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+/* ═══════════════ PIPELINE DASHBOARD SPECIALS ═══════════════ */
+.timing-bar-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.zero-day-card {
+    transition: all 0.3s;
+    cursor: default;
+}
+
+.zero-day-card:hover {
+    border-color: var(--accent-orange) !important;
+    background: rgba(251, 191, 36, 0.08) !important;
+    transform: scale(1.02);
+}
+
+.animate-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
