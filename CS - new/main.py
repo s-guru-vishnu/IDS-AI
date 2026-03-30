@@ -25,6 +25,7 @@ from advanced_nids import AdvancedNIDSEngine
 from package_analyser import TrafficAnalyser
 from ip_blocker import IPBlocker
 import joblib
+from groq_explainer import explain_alert
 
 # MongoDB Logging
 from mongo_logger import setup_mongo_logging
@@ -93,6 +94,7 @@ class Batch10sPipeline:
             self.mongo_client = MongoClient(mongo_uri)
             self.db = self.mongo_client["IDS"]
             self.collection = self.db["batch_logs"]
+            self.blocked_collection = self.db["blocked_alerts"]
             self.use_mongo = True
         except ImportError:
             print("pymongo not installed, falling back to CSV.")
@@ -121,9 +123,24 @@ class Batch10sPipeline:
         bundle = load_model_safe(os.path.join(self.models_dir, name))
         return bundle if bundle else None
 
+    def _get_local_ip(self):
+        """Auto-detect the local primary network IP."""
+        import socket
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            # Use Google DNS to determine primary routing interface
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except Exception:
+            return "127.0.0.1"
+
     def start(self):
+        local_ip = self._get_local_ip()
         print(f"\n=============================================")
         print(f"🚀 Starting Unified 10-Second Batch AI-IDS Pipeline")
+        print(f"🛡️  DEFENDER SYSTEM IP: {local_ip}")
         print(f"Interface: {self.interface or 'All'}")
         print(f"Logging to: {self.csv_log_file}")
         print(f"DDoS Output: 📊 Visual Terminal Summaries | 📂 security_alerts.csv")
@@ -335,13 +352,40 @@ class Batch10sPipeline:
             logs_to_write.append(log_row)
 
             # 🔒 FIREWALL BLOCK
-            if decision == "block" and self.ip_blocker:
-                if not self.ip_blocker.is_blocked(src_ip):
+            if decision == "block":
+                if self.ip_blocker and not self.ip_blocker.is_blocked(src_ip):
                     self.ip_blocker.block_ip(ip=src_ip, reason=attack_type, severity=final_risk, duration=600)
+                
+                # 🛡️ DEDICATED BLOCKED DATA LOGGING
+                if getattr(self, "use_mongo", False):
+                    self.blocked_collection.insert_one({
+                        "Timestamp": batch_time,
+                        "Source_IP": src_ip,
+                        "Dest_IP": dst_ip,
+                        "PPS": pps,
+                        "MITM_Risk": mitm_risk,
+                        "ML_Risk": ml_risk,
+                        "Final_Risk": final_risk,
+                        "Decision": "BLOCK",
+                        "Attack_Type": attack_type,
+                        "Reasons": reasons
+                    })
 
             # Unified Terminal Report
             if decision != "allow" or mitm_risk > 0.1:
-                table_output.append(f"  🚨 {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | MITM: {mitm_risk:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
+                icon = "🚨" if decision != "allow" else "🔔"
+                table_output.append(f"  {icon} {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | MITM: {mitm_risk:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
+                # 🧠 XAI: Non-blocking Groq explanation for every meaningful alert
+                explain_alert(
+                    src_ip=src_ip, dst_ip=dst_ip, pps=pps,
+                    mitm_risk=mitm_risk, ml_risk=ml_risk,
+                    final_risk=final_risk, decision=decision,
+                    attack_type=attack_type,
+                    reasons=result.get('reason', []),
+                    mongo_collection=self.collection if getattr(self, "use_mongo", False) else None,
+                    query={"Source_IP": src_ip, "Timestamp": batch_time},
+                    secondary_collection=self.blocked_collection if (decision == "block" and getattr(self, "use_mongo", False)) else None
+                )
 
         # Write to Database or CSV
         if logs_to_write:
