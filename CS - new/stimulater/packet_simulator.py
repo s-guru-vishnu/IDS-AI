@@ -150,26 +150,30 @@ class PacketSimulator:
             time.sleep(1.0)
         print("✅ DDoS finished.")
 
-    def mitm_attack(self):
+    def mitm_attack(self, duration=5):
         print(f"🕵️ Starting Man-in-the-Middle (ARP Spoofing) simulation...")
+        start = time.time()
         # Simulate telling the gateway that WE are the target, and the target that WE are the gateway
         batch = [
             ARP(op=2, pdst=self.target_ip, psrc=self.gw_ip, hwsrc="00:11:22:33:44:55"),
             ARP(op=2, pdst=self.gw_ip, psrc=self.target_ip, hwsrc="00:11:22:33:44:55")
         ]
-        for _ in range(5):
+        while time.time() - start < duration:
             self.log_and_send("mitm_traffic", batch)
             time.sleep(1.0)
-        print("✅ MITM packets sent.")
+        print("✅ MITM simulation finished.")
 
-    def scan_attack(self):
-        print(f"🔍 Starting Port Scan on {self.target_ip}...")
+    def scan_attack(self, duration=5):
+        print(f"🔍 Starting Port Scan on {self.target_ip} (Repeated for {duration}s)...")
         src_ip = "45.33.22.11"
-        batch = []
-        for port in [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 445, 3306, 3389]:
-            pkt = IP(src=src_ip, dst=self.target_ip)/TCP(dport=port, flags="S")
-            batch.append(pkt)
-        self.log_and_send("scan_traffic", batch)
+        start = time.time()
+        while time.time() - start < duration:
+            batch = []
+            for port in [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 445, 3306, 3389]:
+                pkt = IP(src=src_ip, dst=self.target_ip)/TCP(dport=port, flags="S")
+                batch.append(pkt)
+            self.log_and_send("scan_traffic", batch)
+            time.sleep(1.0)
         print("✅ Port scan finished.")
 
     def normal_traffic(self, duration=10, pps=5):
@@ -219,7 +223,7 @@ class PacketSimulator:
             time.sleep(1.0) # Sleep 1 second between pieces of the header
         print("✅ Stretch/Slow attack finished.")
 
-    def waf_injection(self):
+    def waf_injection(self, duration=5):
         print(f"💉 Starting WAF Injection (SQLi/XSS) on {self.target_ip}...")
         src_ip = "99.88.77.66"
         payloads = [
@@ -228,14 +232,14 @@ class PacketSimulator:
             "POST /login HTTP/1.1\r\n\r\n<script>alert('XSS')</script>",
             "GET /?test=<script>document.cookie</script> HTTP/1.1"
         ]
-        batch = []
-        for p in payloads:
-            pkt = IP(src=src_ip, dst=self.target_ip)/TCP(dport=80, flags="PA")/scapy.Raw(load=p)
-            batch.append(pkt)
-        
-        for _ in range(3):
+        start = time.time()
+        while time.time() - start < duration:
+            batch = []
+            for p in payloads:
+                pkt = IP(src=src_ip, dst=self.target_ip)/TCP(dport=80, flags="PA")/scapy.Raw(load=p)
+                batch.append(pkt)
             self.log_and_send("waf_injection", batch)
-            time.sleep(0.5)
+            time.sleep(1.0)
         print("✅ WAF Injection finished.")
 
     def tcp_volumetric_flood(self, duration=5, pps=100):
@@ -262,24 +266,27 @@ class PacketSimulator:
             time.sleep(1.0)
         print("✅ UDP Volumetric Flood finished.")
 
-    def half_open_syn_flood(self, count=200):
+    def half_open_syn_flood(self, duration=5, pps=50):
         print(f"🤝 Starting Half-Open SYN Flood on {self.target_ip}...")
-        batch = []
         src_ip = "64.22.11.8"
-        for _ in range(count):
-            pkt = IP(src=src_ip, dst=self.target_ip)/TCP(dport=80, sport=random.randint(1024, 65535), flags="S")
-            batch.append(pkt)
-        self.log_and_send("half_open_syn_flood", batch)
+        start = time.time()
+        while time.time() - start < duration:
+            batch = []
+            for _ in range(pps):
+                pkt = IP(src=src_ip, dst=self.target_ip)/TCP(dport=80, sport=random.randint(1024, 65535), flags="S")
+                batch.append(pkt)
+            self.log_and_send("half_open_syn_flood", batch)
+            time.sleep(1.0)
         print("✅ Half-Open SYN Flood finished.")
 
-    def mixed_attacks(self):
-        print("🌪️ Starting MIXED ATTACKS (Chaos Mode)...")
-        # DoS + Scans + WAF all at once
-        for _ in range(3):
-            self.scan_attack()
+    def mixed_attacks(self, duration=10):
+        print(f"🌪️ Starting MIXED ATTACKS (Chaos Mode) for {duration}s...")
+        start = time.time()
+        while time.time() - start < duration:
+            self.scan_attack(duration=1)
             self.dos_attack(duration=1, pps=30)
-            self.waf_injection()
-            time.sleep(1)
+            self.waf_injection(duration=1)
+            time.sleep(0.5)
         print("✅ Mixed Attacks finished.")
 
 
@@ -287,6 +294,7 @@ def main():
     parser = argparse.ArgumentParser(description="IDS Combat Simulator & CSV Generator")
     parser.add_argument("--target", help="Target IP address of the main system", default=None)
     parser.add_argument("--choice", help="Selection (1-13) for the simulation scenario", type=str, default=None)
+    parser.add_argument("--duration", help="Simulation duration in seconds (for CLI mode)", type=int, default=10)
     parser.add_argument("--gateway", help="Gateway IP address for MITM simulation", default=None)
     args = parser.parse_args()
 
@@ -310,26 +318,27 @@ def main():
 
     if args.choice:
         choice = args.choice
-        print(f"🚀 Running attack choice: {choice} from CLI argument.")
-        if choice == '1': sim.ddos_attack()
-        elif choice == '2': sim.dos_attack()
-        elif choice == '3': sim.mitm_attack()
-        elif choice == '4': sim.scan_attack()
-        elif choice == '5': sim.normal_traffic()
-        elif choice == '6': sim.festival_traffic()
-        elif choice == '7': sim.slowloris_attack()
-        elif choice == '8': sim.waf_injection()
-        elif choice == '9': sim.mixed_attacks()
-        elif choice == '10': sim.tcp_volumetric_flood()
-        elif choice == '11': sim.udp_volumetric_flood()
-        elif choice == '12': sim.half_open_syn_flood()
+        duration = args.duration
+        print(f"🚀 Running attack choice: {choice} for {duration}s from CLI argument.")
+        if choice == '1': sim.ddos_attack(duration=duration)
+        elif choice == '2': sim.dos_attack(duration=duration)
+        elif choice == '3': sim.mitm_attack(duration=duration)
+        elif choice == '4': sim.scan_attack(duration=duration)
+        elif choice == '5': sim.normal_traffic(duration=duration)
+        elif choice == '6': sim.festival_traffic(duration=duration)
+        elif choice == '7': sim.slowloris_attack(duration=duration)
+        elif choice == '8': sim.waf_injection(duration=duration)
+        elif choice == '9': sim.mixed_attacks(duration=duration)
+        elif choice == '10': sim.tcp_volumetric_flood(duration=duration)
+        elif choice == '11': sim.udp_volumetric_flood(duration=duration)
+        elif choice == '12': sim.half_open_syn_flood(duration=duration)
         elif choice == '13':
-            sim.normal_traffic(duration=3)
-            sim.scan_attack()
-            sim.dos_attack(duration=3)
-            sim.festival_traffic(duration=3)
-            sim.mitm_attack()
-            sim.mixed_attacks()
+            sim.normal_traffic(duration=duration)
+            sim.scan_attack(duration=duration)
+            sim.dos_attack(duration=duration)
+            sim.festival_traffic(duration=duration)
+            sim.mitm_attack(duration=duration)
+            sim.mixed_attacks(duration=duration)
             print("\n🎉✅ ALL SCENARIOS COMPLETE!")
         else:
             print(f"❌ Invalid choice '{choice}' from CLI.")
@@ -352,33 +361,43 @@ def main():
         print("11. UDP Volumetric Flood")
         print("12. Half-Open SYN Flood")
         print("13. RUN ALL SCENARIOS IN SEQUENCE")
+        print("14. STOP ALL STIMULATIONS & EXIT")
         print("0.  Exit")
         print("="*40)
         
         choice = input("\nSelect traffic scenario to generate & log: ")
         print("")
+
+        if choice in [str(i) for i in range(1, 14)]:
+            try:
+                dur_input = input("⏳ Enter duration for this simulation (seconds) [Default 10s]: ").strip()
+                duration = int(dur_input) if dur_input else 10
+            except ValueError:
+                print("⚠️  Invalid input. Using default 10s.")
+                duration = 10
         
-        if choice == '1': sim.ddos_attack()
-        elif choice == '2': sim.dos_attack()
-        elif choice == '3': sim.mitm_attack()
-        elif choice == '4': sim.scan_attack()
-        elif choice == '5': sim.normal_traffic()
-        elif choice == '6': sim.festival_traffic()
-        elif choice == '7': sim.slowloris_attack()
-        elif choice == '8': sim.waf_injection()
-        elif choice == '9': sim.mixed_attacks()
-        elif choice == '10': sim.tcp_volumetric_flood()
-        elif choice == '11': sim.udp_volumetric_flood()
-        elif choice == '12': sim.half_open_syn_flood()
+        if choice == '1': sim.ddos_attack(duration=duration)
+        elif choice == '2': sim.dos_attack(duration=duration)
+        elif choice == '3': sim.mitm_attack(duration=duration)
+        elif choice == '4': sim.scan_attack(duration=duration)
+        elif choice == '5': sim.normal_traffic(duration=duration)
+        elif choice == '6': sim.festival_traffic(duration=duration)
+        elif choice == '7': sim.slowloris_attack(duration=duration)
+        elif choice == '8': sim.waf_injection(duration=duration)
+        elif choice == '9': sim.mixed_attacks(duration=duration)
+        elif choice == '10': sim.tcp_volumetric_flood(duration=duration)
+        elif choice == '11': sim.udp_volumetric_flood(duration=duration)
+        elif choice == '12': sim.half_open_syn_flood(duration=duration)
         elif choice == '13':
-            sim.normal_traffic(duration=3)
-            sim.scan_attack()
-            sim.dos_attack(duration=3)
-            sim.festival_traffic(duration=3)
-            sim.mitm_attack()
-            sim.mixed_attacks()
+            sim.normal_traffic(duration=duration)
+            sim.scan_attack(duration=duration)
+            sim.dos_attack(duration=duration)
+            sim.festival_traffic(duration=duration)
+            sim.mitm_attack(duration=duration)
+            sim.mixed_attacks(duration=duration)
             print("\n🎉✅ ALL SCENARIOS COMPLETE! Check the stimulate/ folder for your CSV files.")
-        elif choice == '0':
+        elif choice == '14' or choice == '0':
+            print("🛑 Stopping all simulations. Goodbye!")
             break
         else:
             print("❌ Invalid choice. Enter 0-13.")

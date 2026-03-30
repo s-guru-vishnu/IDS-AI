@@ -148,7 +148,8 @@ Write 1 paragraph explaining: what is happening, why it's suspicious, and what t
 def explain_alert(src_ip: str, dst_ip: str, pps: float, mitm_risk: float,
                   ml_risk: float, final_risk: float, decision: str,
                   attack_type: str, reasons: list,
-                  mongo_collection=None, query: dict = None):
+                  mongo_collection=None, query: dict = None,
+                  secondary_collection=None):
     """
     Non-blocking entry point — spawns a background thread to generate
     and print the AI explanation so the detection pipeline isn't delayed.
@@ -175,7 +176,7 @@ def explain_alert(src_ip: str, dst_ip: str, pps: float, mitm_risk: float,
         target=_explain_worker,
         args=(src_ip, dst_ip, pps, mitm_risk, ml_risk,
               final_risk, decision, attack_type, reasons,
-              mongo_collection, query),
+              mongo_collection, query, secondary_collection),
         daemon=True,
         name=f"xai-{src_ip}"
     )
@@ -184,7 +185,8 @@ def explain_alert(src_ip: str, dst_ip: str, pps: float, mitm_risk: float,
 
 def _explain_worker(src_ip, dst_ip, pps, mitm_risk, ml_risk,
                     final_risk, decision, attack_type, reasons,
-                    mongo_collection=None, query=None):
+                    mongo_collection=None, query=None,
+                    secondary_collection=None):
     """Background worker: generates and prints explanation."""
     reasons_text = " | ".join(reasons) if reasons else "No specific reason captured"
     timestamp = datetime.now().strftime("%H:%M:%S")
@@ -205,6 +207,7 @@ def _explain_worker(src_ip, dst_ip, pps, mitm_risk, ml_risk,
         try:
             # Add a small delay to ensure the document was inserted by the main thread
             time.sleep(1.5) 
+            # Update primary collection
             mongo_collection.update_one(
                 query,
                 {"$set": {
@@ -213,7 +216,19 @@ def _explain_worker(src_ip, dst_ip, pps, mitm_risk, ml_risk,
                     "XAI_Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }}
             )
-            logger.info(f"[XAI] Saved explanation for {src_ip} to MongoDB")
+            
+            # Update secondary collection if provided
+            if secondary_collection is not None:
+                secondary_collection.update_one(
+                    query,
+                    {"$set": {
+                        "XAI_Explanation": explanation,
+                        "XAI_Source": source_name,
+                        "XAI_Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }}
+                )
+            
+            logger.info(f"[XAI] Saved explanation for {src_ip} to MongoDB collections")
         except Exception as e:
             logger.error(f"[XAI] Failed to save to MongoDB: {e}")
 
