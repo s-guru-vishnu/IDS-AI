@@ -362,10 +362,10 @@ class Batch10sPipeline:
                         "Timestamp": batch_time,
                         "Source_IP": src_ip,
                         "Dest_IP": dst_ip,
-                        "PPS": row[3],
-                        "MITM_Risk": row[4],
-                        "ML_Risk": row[5],
-                        "Final_Risk": row[6],
+                        "PPS": pps,
+                        "MITM_Risk": mitm_risk,
+                        "ML_Risk": ml_risk,
+                        "Final_Risk": final_risk,
                         "Decision": "BLOCK",
                         "Attack_Type": attack_type,
                         "Reasons": reasons
@@ -373,7 +373,8 @@ class Batch10sPipeline:
 
             # Unified Terminal Report
             if decision != "allow" or mitm_risk > 0.1:
-                table_output.append(f"  🚨 {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | MITM: {mitm_risk:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
+                icon = "🚨" if decision != "allow" else "🔔"
+                table_output.append(f"  {icon} {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | MITM: {mitm_risk:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
                 # 🧠 XAI: Non-blocking Groq explanation for every meaningful alert
                 explain_alert(
                     src_ip=src_ip, dst_ip=dst_ip, pps=pps,
