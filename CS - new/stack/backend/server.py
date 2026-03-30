@@ -1350,12 +1350,13 @@ def flow_buffer_stats():
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
     print("=" * 50)
     print("🛡️  Cyber Defense AI V3 — Backend API Server")
     print(f"📊 Database: AI-IDS @ {MONGO_URI}")
-    print(f"🔗 Server: http://localhost:5000")
+    print(f"🔗 Server: http://0.0.0.0:{port}")
     print(f"🧠 Pipeline: /api/pipeline-stats, /api/flow-buffer-stats")
     print(f"🔴 Zero-Day: /api/zero-day-alerts")
     print(f"🔗 Correlation: /api/correlation-events, /api/pipeline-results")
     print("=" * 50)
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
