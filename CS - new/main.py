@@ -94,6 +94,7 @@ class Batch10sPipeline:
             self.mongo_client = MongoClient(mongo_uri)
             self.db = self.mongo_client["IDS"]
             self.collection = self.db["batch_logs"]
+            self.blocked_collection = self.db["blocked_alerts"]
             self.use_mongo = True
         except ImportError:
             print("pymongo not installed, falling back to CSV.")
@@ -351,9 +352,24 @@ class Batch10sPipeline:
             logs_to_write.append(log_row)
 
             # 🔒 FIREWALL BLOCK
-            if decision == "block" and self.ip_blocker:
-                if not self.ip_blocker.is_blocked(src_ip):
+            if decision == "block":
+                if self.ip_blocker and not self.ip_blocker.is_blocked(src_ip):
                     self.ip_blocker.block_ip(ip=src_ip, reason=attack_type, severity=final_risk, duration=600)
+                
+                # 🛡️ DEDICATED BLOCKED DATA LOGGING
+                if getattr(self, "use_mongo", False):
+                    self.blocked_collection.insert_one({
+                        "Timestamp": batch_time,
+                        "Source_IP": src_ip,
+                        "Dest_IP": dst_ip,
+                        "PPS": row[3],
+                        "MITM_Risk": row[4],
+                        "ML_Risk": row[5],
+                        "Final_Risk": row[6],
+                        "Decision": "BLOCK",
+                        "Attack_Type": attack_type,
+                        "Reasons": reasons
+                    })
 
             # Unified Terminal Report
             if decision != "allow" or mitm_risk > 0.1:
@@ -366,7 +382,8 @@ class Batch10sPipeline:
                     attack_type=attack_type,
                     reasons=result.get('reason', []),
                     mongo_collection=self.collection if getattr(self, "use_mongo", False) else None,
-                    query={"Source_IP": src_ip, "Timestamp": batch_time}
+                    query={"Source_IP": src_ip, "Timestamp": batch_time},
+                    secondary_collection=self.blocked_collection if (decision == "block" and getattr(self, "use_mongo", False)) else None
                 )
 
         # Write to Database or CSV
