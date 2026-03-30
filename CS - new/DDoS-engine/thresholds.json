@@ -1,0 +1,50 @@
+{
+    "version": "V69",
+    "decision_thresholds": {
+        "allow_max": 0.3,
+        "alert_max": 0.7,
+        "throttle_max": 0.9,
+        "comment": "risk < allow_max = allow, < alert_max = alert, < throttle_max = throttle, >= throttle_max = block"
+    },
+    "penalties": {
+        "waf_threat": 0.35,
+        "syn_spike_high": 0.40,
+        "syn_spike_moderate": 0.15,
+        "ddos_diversity_high": 0.25,
+        "ddos_diversity_low": 0.10,
+        "burst_high": 0.15,
+        "burst_low": 0.05,
+        "stealth_ultra": 0.15,
+        "stealth_normal": 0.12,
+        "global_ddos_max": 0.20
+    },
+    "hard_overrides": {
+        "syn_flood_pps": 800,
+        "syn_flood_min_ratio": 0.40,
+        "volume_legitimacy_pps": 600
+    },
+    "ema": {
+        "cold_start_alpha": 0.7,
+        "warmup_alpha": 0.55,
+        "steady_alpha": 0.35,
+        "cold_start_windows": 3,
+        "warmup_windows": 5
+    },
+    "distributed_ddos": {
+        "global_syn_threshold": 20,
+        "min_unique_ips": 3,
+        "penalty_high": 0.20,
+        "penalty_low": 0.12
+    },
+    "zero_fp_refinement": {
+        "anomaly_signal_zero_multiplier": 0.75,
+        "legitimate_pattern_multiplier": 0.85,
+        "stealth_pps_cap": 0.85,
+        "pps_stealth_threshold": 5,
+        "xgb_cold_threshold": 0.3,
+        "ae_baseline_multiplier": 1.5,
+        "handshake_cold_threshold": 1.0,
+        "mitm_cold_threshold": 0.1,
+        "adaptive_cold_threshold": 1.0
+    }
+}
