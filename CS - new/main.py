@@ -122,9 +122,24 @@ class Batch10sPipeline:
         bundle = load_model_safe(os.path.join(self.models_dir, name))
         return bundle if bundle else None
 
+    def _get_local_ip(self):
+        """Auto-detect the local primary network IP."""
+        import socket
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            # Use Google DNS to determine primary routing interface
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except Exception:
+            return "127.0.0.1"
+
     def start(self):
+        local_ip = self._get_local_ip()
         print(f"\n=============================================")
         print(f"🚀 Starting Unified 10-Second Batch AI-IDS Pipeline")
+        print(f"🛡️  DEFENDER SYSTEM IP: {local_ip}")
         print(f"Interface: {self.interface or 'All'}")
         print(f"Logging to: {self.csv_log_file}")
         print(f"DDoS Output: 📊 Visual Terminal Summaries | 📂 security_alerts.csv")
