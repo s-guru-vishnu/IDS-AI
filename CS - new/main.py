@@ -25,6 +25,7 @@ from advanced_nids import AdvancedNIDSEngine
 from package_analyser import TrafficAnalyser
 from ip_blocker import IPBlocker
 import joblib
+from groq_explainer import explain_alert
 
 # MongoDB Logging
 from mongo_logger import setup_mongo_logging
@@ -342,6 +343,16 @@ class Batch10sPipeline:
             # Unified Terminal Report
             if decision != "allow" or mitm_risk > 0.1:
                 table_output.append(f"  🚨 {src_ip:<15} -> {dst_ip:<15} | PPS: {pps:<6.1f} | MITM: {mitm_risk:<4.2f} | AI Model: {model_rating:<4.2f} | Action: {decision.upper():<7} | Vector: {attack_type}")
+                # 🧠 XAI: Non-blocking Groq explanation for every meaningful alert
+                explain_alert(
+                    src_ip=src_ip, dst_ip=dst_ip, pps=pps,
+                    mitm_risk=mitm_risk, ml_risk=ml_risk,
+                    final_risk=final_risk, decision=decision,
+                    attack_type=attack_type,
+                    reasons=result.get('reason', []),
+                    mongo_collection=self.collection if getattr(self, "use_mongo", False) else None,
+                    query={"Source_IP": src_ip, "Timestamp": batch_time}
+                )
 
         # Write to Database or CSV
         if logs_to_write:
