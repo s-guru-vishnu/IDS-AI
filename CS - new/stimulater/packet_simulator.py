@@ -284,18 +284,57 @@ class PacketSimulator:
 
 
 def main():
-    print("\n" + "="*40)
-    print("⚔️  TARGET CONFIGURATION  ⚔️")
-    print("="*40)
-    print("Enter the IP address of your MAIN SYSTEM running the AI-IDS.")
-    print("Example: 192.168.1.10 or 10.195.216.206")
-    target_input = input("\nTarget IP [Press Enter to auto-detect]: ").strip()
-    
-    if target_input:
-        sim = PacketSimulator(target_ip=target_input)
+    parser = argparse.ArgumentParser(description="IDS Combat Simulator & CSV Generator")
+    parser.add_argument("--target", help="Target IP address of the main system", default=None)
+    parser.add_argument("--choice", help="Selection (1-13) for the simulation scenario", type=str, default=None)
+    parser.add_argument("--gateway", help="Gateway IP address for MITM simulation", default=None)
+    args = parser.parse_args()
+
+    if args.target:
+        print(f"🎯 Target IP provided via CLI: {args.target}")
+        sim = PacketSimulator(target_ip=args.target, gw_ip=args.gateway)
+    elif args.choice:
+        print("🎯 Auto-detecting Target IP for CLI-triggered attack...")
+        sim = PacketSimulator(gw_ip=args.gateway)
     else:
-        sim = PacketSimulator()
-    
+        print("\n" + "="*40)
+        print("⚔️  TARGET CONFIGURATION  ⚔️")
+        print("="*40)
+        print("Enter the IP address of your MAIN SYSTEM running the AI-IDS.")
+        print("Example: 192.168.1.10 or 10.195.216.206")
+        target_input = input("\nTarget IP [Press Enter to auto-detect]: ").strip()
+        if target_input:
+            sim = PacketSimulator(target_ip=target_input, gw_ip=args.gateway)
+        else:
+            sim = PacketSimulator(gw_ip=args.gateway)
+
+    if args.choice:
+        choice = args.choice
+        print(f"🚀 Running attack choice: {choice} from CLI argument.")
+        if choice == '1': sim.ddos_attack()
+        elif choice == '2': sim.dos_attack()
+        elif choice == '3': sim.mitm_attack()
+        elif choice == '4': sim.scan_attack()
+        elif choice == '5': sim.normal_traffic()
+        elif choice == '6': sim.festival_traffic()
+        elif choice == '7': sim.slowloris_attack()
+        elif choice == '8': sim.waf_injection()
+        elif choice == '9': sim.mixed_attacks()
+        elif choice == '10': sim.tcp_volumetric_flood()
+        elif choice == '11': sim.udp_volumetric_flood()
+        elif choice == '12': sim.half_open_syn_flood()
+        elif choice == '13':
+            sim.normal_traffic(duration=3)
+            sim.scan_attack()
+            sim.dos_attack(duration=3)
+            sim.festival_traffic(duration=3)
+            sim.mitm_attack()
+            sim.mixed_attacks()
+            print("\n🎉✅ ALL SCENARIOS COMPLETE!")
+        else:
+            print(f"❌ Invalid choice '{choice}' from CLI.")
+        return
+
     while True:
         print("\n" + "="*40)
         print("⚔️  IDS COMBAT SIMULATOR & CSV GENERATOR  ⚔️")

@@ -421,7 +421,7 @@ class IPBlocker:
 
     def _log_block_to_mongo(self, record: BlockRecord):
         """Insert a block record into MongoDB."""
-        if not self._mongo_collection:
+        if self._mongo_collection is None:
             return
         try:
             doc = {
@@ -443,7 +443,7 @@ class IPBlocker:
 
     def _update_mongo_record(self, ip: str, extended: bool = False):
         """Update an existing block record (e.g., when extended)."""
-        if not self._mongo_collection:
+        if self._mongo_collection is None:
             return
         try:
             record = self._active_blocks.get(ip)
@@ -460,7 +460,7 @@ class IPBlocker:
 
     def _update_mongo_unblock(self, ip: str):
         """Mark a block as EXPIRED in MongoDB."""
-        if not self._mongo_collection:
+        if self._mongo_collection is None:
             return
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -474,7 +474,7 @@ class IPBlocker:
     def _log_block_attempt_to_mongo(self, ip: str, reason: str,
                                      severity: float, success: bool):
         """Log a failed block attempt."""
-        if not self._mongo_collection:
+        if self._mongo_collection is None:
             return
         try:
             self._mongo_collection.insert_one({
