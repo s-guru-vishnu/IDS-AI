@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "cd backend && gunicorn server:app",
+    "restartPolicyType": "ON_FAILURE",
+    "healthCheckPath": "/api/health",
+    "serviceName": "IDS-Dashboard-Monolith"
+  }
+}

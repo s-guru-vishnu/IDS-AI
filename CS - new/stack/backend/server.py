@@ -18,8 +18,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
-app = Flask(__name__)
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
+
+# ... (Previous imports)
+
+app = Flask(__name__, static_folder="../frontend/dist", static_url_path="")
 CORS(app)
+
+# Serve React App
+@app.route("/")
+def serve_react():
+    return send_from_directory(app.static_folder, "index.html")
+
+# Catch-all route for React Router
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory(app.static_folder, "index.html")
 
 # MongoDB Connection
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
