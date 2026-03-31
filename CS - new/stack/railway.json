@@ -4,9 +4,8 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "cd backend && gunicorn server:app",
-    "restartPolicyType": "ON_FAILURE",
-    "healthCheckPath": "/api/health",
-    "serviceName": "IDS-Dashboard-Monolith"
+    "startCommand": "cd backend && gunicorn server:app --bind 0.0.0.0:$PORT --workers 3 --threads 6 --timeout 120",
+    "healthcheckPath": "/api/health",
+    "restartPolicyType": "ON_FAILURE"
   }
 }
