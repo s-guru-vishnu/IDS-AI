@@ -19,7 +19,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# Production CORS — explicit origin allowlist
+# Add new domains to CORS_ORIGINS env var (comma-separated) or here
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
+CORS_ORIGINS = [o.strip() for o in CORS_ORIGINS if o.strip()]
+
+# Default allowed origins (always included)
+DEFAULT_ORIGINS = [
+    "https://cybermatrix-delta.vercel.app",
+    "https://thecybermatrix.space",
+    "http://localhost:5173",  # Vite dev server
+    "http://localhost:3000",
+]
+ALLOWED_ORIGINS = list(set(DEFAULT_ORIGINS + CORS_ORIGINS))
+
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # MongoDB Connection
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
