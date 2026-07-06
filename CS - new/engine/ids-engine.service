@@ -1,0 +1,28 @@
+[Unit]
+Description=Hybrid AI-IDS Engine — Network Intrusion Detection System
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ids-engine
+ExecStart=/opt/ids-engine/venv/bin/python -u main.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment file
+EnvironmentFile=/opt/ids-engine/.env
+
+# Security hardening
+NoNewPrivileges=false
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+
+# Graceful shutdown
+TimeoutStopSec=30
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
