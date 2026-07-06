@@ -80,7 +80,7 @@ The project is structured to deploy the **Frontend** to Vercel and the **Backend
 1. Push your code to a GitHub repository.
 2. Sign in to [Render](https://render.com) and connect your GitHub account.
 3. The project includes a `render.yaml` Blueprint. On Render's dashboard, go to **Blueprints** and create a new instance from your repository.
-4. Render will automatically detect the Python environment and run `gunicorn backend.server:app`.
+4. Render will automatically detect the **Docker** environment using the updated `render.yaml` and `backend/Dockerfile`.
 5. **Environment Variables**: Go to your Render Web Service settings and add:
    - `MONGO_URI`: *Your MongoDB Atlas connection string.*
 6. Note the URL of your deployed backend (e.g., `https://hybrid-ai-ids-backend.onrender.com`).

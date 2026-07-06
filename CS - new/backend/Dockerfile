@@ -7,10 +7,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend files
-COPY backend/ ./backend/
+COPY . .
 
 # Expose port
 EXPOSE 5005
 
-# Run the application
-CMD ["gunicorn", "--chdir", "backend", "server:app", "-b", "0.0.0.0:5005"]
+# Run the application (Render injects $PORT automatically)
+CMD ["sh", "-c", "gunicorn server:app -b 0.0.0.0:${PORT:-5005}"]

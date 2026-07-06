@@ -1,9 +1,8 @@
 services:
   - type: web
     name: hybrid-ai-ids-backend
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --chdir backend server:app -b 0.0.0.0:$PORT
+    env: docker
+    rootDir: backend
     envVars:
       - key: MONGO_URI
         sync: false
