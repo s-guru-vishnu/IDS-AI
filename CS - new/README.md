@@ -63,3 +63,54 @@ Use this interactive tool to fire 14 different complex network attacks at your m
 ```powershell
 python stimulater\packet_simulator.py
 ```
+
+---
+
+## 🌍 Production Deployment Guide
+
+The project is structured to deploy the **Frontend** to Vercel and the **Backend** to Render, while using **MongoDB Atlas** as the production database.
+
+### 1. Database Setup (MongoDB Atlas)
+1. Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Go to **Network Access** and whitelist your IP (or `0.0.0.0/0` for Render).
+3. Under **Database Access**, create a user with read/write privileges.
+4. Get your connection string (it looks like `mongodb+srv://<username>:<password>@cluster0...`).
+
+### 2. Backend Deployment (Render)
+1. Push your code to a GitHub repository.
+2. Sign in to [Render](https://render.com) and connect your GitHub account.
+3. The project includes a `render.yaml` Blueprint. On Render's dashboard, go to **Blueprints** and create a new instance from your repository.
+4. Render will automatically detect the Python environment and run `gunicorn backend.server:app`.
+5. **Environment Variables**: Go to your Render Web Service settings and add:
+   - `MONGO_URI`: *Your MongoDB Atlas connection string.*
+6. Note the URL of your deployed backend (e.g., `https://hybrid-ai-ids-backend.onrender.com`).
+
+### 3. Frontend Deployment (Vercel)
+1. Sign in to [Vercel](https://vercel.com) and import your GitHub repository.
+2. Ensure the framework preset is **Vite**.
+3. **Environment Variables**: Add the following environment variable:
+   - `VITE_API_BASE`: `https://hybrid-ai-ids-backend.onrender.com/api` *(replace with your actual Render URL)*.
+4. Click **Deploy**. Vercel will automatically read `frontend/vercel.json` and build the dashboard.
+
+### 4. Engine Configuration (Local/Server)
+The Core AI Engine (`engine/main.py`) must run continuously on the target network to sniff packets.
+1. Create a `.env` file in the root directory (use `.env.example` as a template).
+2. Set `MONGO_URI` in `.env` to match your MongoDB Atlas URI.
+3. Start the engine:
+   ```powershell
+   python engine/main.py
+   ```
+4. The engine will now write logs directly to the cloud DB, which will immediately appear on your Vercel frontend.
+
+### 5. Verification Steps
+- **Dashboard:** Visit your Vercel URL. You should see the dashboard load. If it shows connection errors, verify your `VITE_API_BASE` in Vercel settings and ensure the Render backend is live.
+- **Backend logs:** Check Render logs for successful MongoDB connection.
+- **Engine logs:** Run the engine and verify it says "Listening for packets...". Generate some test traffic to see if it appears on the dashboard.
+
+### 6. Common Errors and Fixes
+- **Error:** `CORS error` on Frontend.
+  - **Fix:** Ensure the backend `CORS(app)` is configured correctly, and the `VITE_API_BASE` doesn't have a trailing slash.
+- **Error:** `ModuleNotFoundError: No module named 'flask'` on Render.
+  - **Fix:** Ensure `Flask` and `gunicorn` are in `requirements.txt`.
+- **Error:** Dashboard shows zero packets.
+  - **Fix:** Verify your local `engine/main.py` is using the same `MONGO_URI` as the Render backend.

@@ -47,3 +47,15 @@ stimulater/*.log
 
 # Temporary scripts
 /tmp/
+
+# Generated local files (CSVs and JSONs)
+*.csv
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!thresholds.json
+
+*.txt
+!requirements.txt
+!CMakeLists.txt
