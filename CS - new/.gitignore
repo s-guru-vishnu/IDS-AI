@@ -2,6 +2,9 @@
 .env
 .DS_Store
 Thumbs.db
+cybermatrix.pem
+AI-IDS_Engine_Guide.md
+AI-IDS_Simulator_Guide.md
 
 # Python
 __pycache__/
