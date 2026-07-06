@@ -21,7 +21,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Production CORS — explicit origin allowlist
-# Add new domains to CORS_ORIGINS env var (comma-separated) or here
+# Add new domains to CORS_ORIGINS env var (comma-separated) on Render
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 CORS_ORIGINS = [o.strip() for o in CORS_ORIGINS if o.strip()]
 
@@ -29,12 +29,16 @@ CORS_ORIGINS = [o.strip() for o in CORS_ORIGINS if o.strip()]
 DEFAULT_ORIGINS = [
     "https://cybermatrix-delta.vercel.app",
     "https://thecybermatrix.space",
-    "http://localhost:5173",  # Vite dev server
+    "http://localhost:5173",
     "http://localhost:3000",
 ]
 ALLOWED_ORIGINS = list(set(DEFAULT_ORIGINS + CORS_ORIGINS))
 
-CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
+CORS(app,
+     origins=ALLOWED_ORIGINS,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"],
+     supports_credentials=True)
 
 # MongoDB Connection
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")

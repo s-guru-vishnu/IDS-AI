@@ -1,4 +1,6 @@
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5005/api';
+// Auto-normalize: works whether VITE_API_BASE ends with /api or not
+const _raw = import.meta.env.VITE_API_BASE || 'http://localhost:5005/api';
+export const API_BASE = _raw.replace(/\/+$/, '').endsWith('/api') ? _raw.replace(/\/+$/, '') : `${_raw.replace(/\/+$/, '')}/api`;
 
 export async function fetchAPI(endpoint) {
     const token = localStorage.getItem('ids_auth_token');
