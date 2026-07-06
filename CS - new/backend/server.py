@@ -29,6 +29,7 @@ CORS_ORIGINS = [o.strip() for o in CORS_ORIGINS if o.strip()]
 DEFAULT_ORIGINS = [
     "https://cybermatrix-delta.vercel.app",
     "https://thecybermatrix.space",
+    "https://www.thecybermatrix.space",
     "http://localhost:5173",
     "http://localhost:3000",
 ]

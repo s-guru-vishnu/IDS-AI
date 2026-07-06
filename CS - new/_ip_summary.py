@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from pymongo import MongoClient
 import json
 c = MongoClient('mongodb://localhost:27017/')
