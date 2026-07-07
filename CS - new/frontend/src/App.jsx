@@ -10,6 +10,7 @@ import AlertLogs from './pages/AlertLogs'
 import BlockedIPs from './pages/BlockedIPs'
 import AttackTypes from './pages/AttackTypes'
 import Profile from './pages/Profile'
+import TerminalConsole from './components/TerminalConsole'
 
 function App() {
   const [authToken, setAuthToken] = useState(localStorage.getItem('ids_auth_token'))
@@ -47,6 +48,7 @@ function App() {
                     © 2026 STEALTH SECURITY SYSTEMS
                   </p>
               </footer>
+              <TerminalConsole />
             </div>
           ) : (
             <Navigate to="/login" />

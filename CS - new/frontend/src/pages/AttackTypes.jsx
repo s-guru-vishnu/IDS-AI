@@ -100,36 +100,38 @@ export default function AttackTypes() {
           <div className="dashboard-grid">
               <div className="main-column">
                   <div className="dash-card">
-                      <h3 style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px' }}>Incident Records</h3>
-                      <table className="premium-table">
-                          <thead>
-                              <tr>
-                                  <th>Event Timestamp</th>
-                                  <th>Source Vector (IP)</th>
-                                  <th>Risk Profile</th>
-                                  <th>Throughput</th>
-                                  <th>Countermeasure</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {drilldown?.records?.map((r, i) => (
-                                <tr key={i}>
-                                    <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.Timestamp}</td>
-                                    <td style={{ fontWeight: '800', color: 'var(--text-primary)' }}>{r.Source_IP}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <div style={{ height: '6px', width: '60px', background: 'var(--bg-surface)', borderRadius: '10px', overflow: 'hidden' }}>
-                                                <div style={{ width: `${r.Final_Risk * 100}%`, height: '100%', background: r.Final_Risk > 0.7 ? 'var(--accent-red)' : 'var(--accent-orange)' }}></div>
+                      <h3 style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', margin: 0 }}>Incident Records</h3>
+                      <div className="table-container">
+                          <table className="premium-table">
+                              <thead>
+                                  <tr>
+                                      <th>Event Timestamp</th>
+                                      <th>Source Vector (IP)</th>
+                                      <th>Risk Profile</th>
+                                      <th>Throughput</th>
+                                      <th>Countermeasure</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  {drilldown?.records?.map((r, i) => (
+                                    <tr key={i}>
+                                        <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.Timestamp}</td>
+                                        <td style={{ fontWeight: '800', color: 'var(--text-primary)' }}>{r.Source_IP}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <div style={{ height: '6px', width: '60px', background: 'var(--bg-surface)', borderRadius: '10px', overflow: 'hidden' }}>
+                                                    <div style={{ width: `${r.Final_Risk * 100}%`, height: '100%', background: r.Final_Risk > 0.7 ? 'var(--accent-red)' : 'var(--accent-orange)' }}></div>
+                                                </div>
+                                                <span style={{ fontSize: '12px', fontWeight: '800' }}>{(r.Final_Risk * 100).toFixed(0)}%</span>
                                             </div>
-                                            <span style={{ fontSize: '12px', fontWeight: '800' }}>{(r.Final_Risk * 100).toFixed(0)}%</span>
-                                        </div>
-                                    </td>
-                                    <td>{r.PPS} <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>PPS</span></td>
-                                    <td><span className={`badge-premium ${r.Decision === 'BLOCK' ? 'badge-block' : 'badge-allow'}`}>{r.Decision}</span></td>
-                                </tr>
-                              ))}
-                          </tbody>
-                      </table>
+                                        </td>
+                                        <td>{r.PPS} <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>PPS</span></td>
+                                        <td><span className={`badge-premium ${r.Decision === 'BLOCK' ? 'badge-block' : 'badge-allow'}`}>{r.Decision}</span></td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                          </table>
+                      </div>
                   </div>
               </div>
               

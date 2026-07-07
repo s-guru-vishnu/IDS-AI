@@ -106,90 +106,92 @@ export default function BlockedIPs() {
           </div>
         </div>
 
-        <table className="premium-table">
-          <thead>
-            <tr>
-              <th>IP Address</th>
-              <th>Attack Vector</th>
-              <th>Risk Score</th>
-              <th>Blocked At</th>
-              <th>TTL Remaining</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {firewallBlocks.map((block, i) => {
-              const isActive = block.status === 'ACTIVE'
-              return (
-                <tr key={i} style={{ opacity: isActive ? 1 : 0.5 }}>
-                  <td style={{ fontWeight: 800, color: isActive ? 'var(--accent-red)' : 'var(--text-muted)' }}>
-                    {block.ip}
-                  </td>
-                  <td>
-                    <span style={{
-                      fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px',
-                      background: 'rgba(220, 38, 38, 0.08)', color: '#ef4444'
-                    }}>{block.reason}</span>
-                  </td>
-                  <td style={{ fontWeight: 800 }}>
-                    {(block.severity * 100).toFixed(0)}%
-                  </td>
-                  <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    {block.blocked_at}
-                  </td>
-                  <td>
-                    {isActive ? (
+        <div className="table-container">
+          <table className="premium-table">
+            <thead>
+              <tr>
+                <th>IP Address</th>
+                <th>Attack Vector</th>
+                <th>Risk Score</th>
+                <th>Blocked At</th>
+                <th>TTL Remaining</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {firewallBlocks.map((block, i) => {
+                const isActive = block.status === 'ACTIVE'
+                return (
+                  <tr key={i} style={{ opacity: isActive ? 1 : 0.5 }}>
+                    <td style={{ fontWeight: 800, color: isActive ? 'var(--accent-red)' : 'var(--text-muted)' }}>
+                      {block.ip}
+                    </td>
+                    <td>
                       <span style={{
-                        fontWeight: 800, fontSize: '12px',
-                        color: '#dc2626', padding: '3px 8px', borderRadius: '4px',
-                        background: 'rgba(220, 38, 38, 0.08)',
-                        animation: 'pulse 2s infinite'
-                      }}>
-                        {formatTTL(block.remaining_seconds)}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '8px', height: '8px', borderRadius: '50%',
-                        background: isActive ? 'var(--accent-red)' : '#475569',
-                        boxShadow: isActive ? '0 0 10px var(--accent-red)' : 'none',
-                      }}></div>
-                      <span style={{
-                        fontSize: '10px', fontWeight: 800, letterSpacing: '0.5px',
-                        color: isActive ? 'var(--accent-red)' : 'var(--text-muted)'
-                      }}>
-                        {isActive ? 'BLOCKED' : 'RELEASED'}
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    {isActive && (
-                      <button
-                        onClick={() => handleUnblock(block.ip)}
-                        disabled={unblocking === block.ip}
-                        style={{
-                          padding: '4px 12px', borderRadius: '6px', fontSize: '10px', fontWeight: 800,
-                          border: '1px solid rgba(220, 38, 38, 0.3)', cursor: 'pointer',
-                          background: unblocking === block.ip ? 'rgba(100,100,100,.1)' : 'rgba(220, 38, 38, 0.06)',
-                          color: '#dc2626', letterSpacing: '0.5px', transition: 'all 0.2s',
-                        }}
-                        onMouseOver={(e) => { e.target.style.background = 'rgba(220, 38, 38, 0.15)' }}
-                        onMouseOut={(e) => { e.target.style.background = 'rgba(220, 38, 38, 0.06)' }}
-                      >
-                        {unblocking === block.ip ? 'RELEASING...' : 'UNBLOCK'}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                        fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px',
+                        background: 'rgba(220, 38, 38, 0.08)', color: '#ef4444'
+                      }}>{block.reason}</span>
+                    </td>
+                    <td style={{ fontWeight: 800 }}>
+                      {(block.severity * 100).toFixed(0)}%
+                    </td>
+                    <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {block.blocked_at}
+                    </td>
+                    <td>
+                      {isActive ? (
+                        <span style={{
+                          fontWeight: 800, fontSize: '12px',
+                          color: '#dc2626', padding: '3px 8px', borderRadius: '4px',
+                          background: 'rgba(220, 38, 38, 0.08)',
+                          animation: 'pulse 2s infinite'
+                        }}>
+                          {formatTTL(block.remaining_seconds)}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '8px', height: '8px', borderRadius: '50%',
+                          background: isActive ? 'var(--accent-red)' : '#475569',
+                          boxShadow: isActive ? '0 0 10px var(--accent-red)' : 'none',
+                        }}></div>
+                        <span style={{
+                          fontSize: '10px', fontWeight: 800, letterSpacing: '0.5px',
+                          color: isActive ? 'var(--accent-red)' : 'var(--text-muted)'
+                        }}>
+                          {isActive ? 'BLOCKED' : 'RELEASED'}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      {isActive && (
+                        <button
+                          onClick={() => handleUnblock(block.ip)}
+                          disabled={unblocking === block.ip}
+                          style={{
+                            padding: '4px 12px', borderRadius: '6px', fontSize: '10px', fontWeight: 800,
+                            border: '1px solid rgba(220, 38, 38, 0.3)', cursor: 'pointer',
+                            background: unblocking === block.ip ? 'rgba(100,100,100,.1)' : 'rgba(220, 38, 38, 0.06)',
+                            color: '#dc2626', letterSpacing: '0.5px', transition: 'all 0.2s',
+                          }}
+                          onMouseOver={(e) => { e.target.style.background = 'rgba(220, 38, 38, 0.15)' }}
+                          onMouseOut={(e) => { e.target.style.background = 'rgba(220, 38, 38, 0.06)' }}
+                        >
+                          {unblocking === block.ip ? 'RELEASING...' : 'UNBLOCK'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
         {firewallBlocks.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>
             No firewall blocks active. All traffic permitted.
@@ -210,41 +212,43 @@ export default function BlockedIPs() {
           </div>
         </div>
 
-        <table className="premium-table">
-          <thead>
-            <tr>
-              <th>Blocked IP Address</th>
-              <th>Block Count</th>
-              <th>Last Incident</th>
-              <th>Avg Risk</th>
-              <th>Primary Reasons</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {blocked.map((item, i) => (
-              <tr key={i}>
-                <td style={{ fontWeight: '800', color: 'var(--accent-red)' }}>{item.source_ip}</td>
-                <td><span className="badge-premium" style={{ background: 'var(--accent-red-soft)', color: 'var(--accent-red)' }}>{item.block_count} EVENTS</span></td>
-                <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.last_blocked}</td>
-                <td style={{ fontWeight: '800' }}>{(item.avg_risk * 100).toFixed(0)}%</td>
-                <td>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {item.reasons?.map((r, idx) => (
-                            <span key={idx} style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px' }}>{r.split('|')[0]}</span>
-                        ))}
-                    </div>
-                </td>
-                <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', background: 'var(--accent-red)', borderRadius: '50%', boxShadow: '0 0 8px var(--accent-red)' }}></div>
-                        <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--text-muted)' }}>TERMINATED</span>
-                    </div>
-                </td>
+        <div className="table-container">
+          <table className="premium-table">
+            <thead>
+              <tr>
+                <th>Blocked IP Address</th>
+                <th>Block Count</th>
+                <th>Last Incident</th>
+                <th>Avg Risk</th>
+                <th>Primary Reasons</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {blocked.map((item, i) => (
+                <tr key={i}>
+                  <td style={{ fontWeight: '800', color: 'var(--accent-red)' }}>{item.source_ip}</td>
+                  <td><span className="badge-premium" style={{ background: 'var(--accent-red-soft)', color: 'var(--accent-red)' }}>{item.block_count} EVENTS</span></td>
+                  <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.last_blocked}</td>
+                  <td style={{ fontWeight: '800' }}>{(item.avg_risk * 100).toFixed(0)}%</td>
+                  <td>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {item.reasons?.map((r, idx) => (
+                              <span key={idx} style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px' }}>{r.split('|')[0]}</span>
+                          ))}
+                      </div>
+                  </td>
+                  <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '8px', height: '8px', background: 'var(--accent-red)', borderRadius: '50%', boxShadow: '0 0 8px var(--accent-red)' }}></div>
+                          <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--text-muted)' }}>TERMINATED</span>
+                      </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {blocked.length === 0 && <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>No blacklisted entities found. Perimeter secure.</div>}
       </div>
 

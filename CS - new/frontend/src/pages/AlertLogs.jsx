@@ -64,7 +64,7 @@ export default function AlertLogs() {
         </div>
       </div>
 
-      <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="dash-card animate-stagger" style={{ '--i': 1 }}>
           <div className="table-container">
             <table className="premium-table" style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
@@ -89,8 +89,8 @@ export default function AlertLogs() {
                           <tbody>
                             <tr 
                               onClick={() => toggleExpand(idx)}
-                              style={{ cursor: 'pointer', transition: 'background 0.2s', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color)' }} 
-                              className={`hover-row ${isExpanded ? 'active-row' : ''}`}
+                              style={{ cursor: 'pointer', transition: 'background 0.2s', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color)', '--i': idx % 10 }} 
+                              className={`hover-row ${isExpanded ? 'active-row' : ''} animate-stagger`}
                             >
                               <td style={{ padding: '20px', width: '15%' }}>
                                  <span style={{ 
@@ -100,7 +100,9 @@ export default function AlertLogs() {
                                     color: isCritical ? 'var(--accent-red)' : 'var(--accent-orange)',
                                     padding: '4px 10px',
                                     borderRadius: '20px',
-                                    border: `1px solid ${isCritical ? 'rgba(220, 38, 38, 0.2)' : 'rgba(217, 119, 6, 0.2)'}`
+                                    border: `1px solid ${isCritical ? 'rgba(220, 38, 38, 0.25)' : 'rgba(217, 119, 6, 0.25)'}`,
+                                    boxShadow: isCritical ? '0 0 10px rgba(220, 38, 38, 0.15)' : 'none',
+                                    display: 'inline-block'
                                   }}>
                                     {alert.severity}
                                   </span>
@@ -136,29 +138,42 @@ export default function AlertLogs() {
                             </tr>
                             {isExpanded && (
                               <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                <td colSpan="5" style={{ padding: '0 20px 20px 20px', background: 'rgba(255,255,255,0.01)' }}>
+                                <td colSpan="5" style={{ padding: '0 20px 20px 20px', background: 'transparent' }}>
                                    <div className="xai-container" style={{ 
-                                      background: 'rgba(0,0,0,0.2)', 
-                                      padding: '20px', 
-                                      borderRadius: '12px', 
-                                      border: '1px solid rgba(255,255,255,0.05)',
+                                      background: 'var(--bg-surface)', 
+                                      backdropFilter: 'blur(16px)',
+                                      webkitBackdropFilter: 'blur(16px)',
+                                      padding: '24px', 
+                                      borderRadius: '16px', 
+                                      border: '1px solid var(--border-color)',
+                                      borderLeft: `4px solid ${isCritical ? 'var(--accent-red)' : 'var(--accent-orange)'}`,
+                                      boxShadow: `0 4px 20px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255,255,255,0.02)`,
                                       marginTop: '10px'
                                    }}>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                        <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-cyan)', letterSpacing: '1px' }}>
-                                          🧠 AI-IDS EXPLAINABILITY LAYER
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px', alignItems: 'center' }}>
+                                        <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-cyan)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                                          🧠 AI-IDS Explainability Narrative
                                         </div>
-                                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                                          Source: {alert.XAI_Source || 'Analytic Engine'}
+                                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                                          Source: {alert.XAI_Source || 'Sensor Analytics'}
                                         </div>
                                       </div>
-                                      <p style={{ fontSize: '13px', lineHeight: '1.6', color: 'var(--text-secondary)', margin: 0 }}>
+                                      <p style={{ fontSize: '13.5px', lineHeight: '1.65', color: 'var(--text-secondary)', margin: 0, fontWeight: '500' }}>
                                         {alert.XAI_Explanation || "Generating AI narrative... (Wait 5-10 seconds for Groq analysis to complete)"}
                                       </p>
                                       {alert.Reasons && (
-                                        <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        <div style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
                                           {(typeof alert.Reasons === 'string' ? alert.Reasons.split('|') : (Array.isArray(alert.Reasons) ? alert.Reasons : [])).map((r, i) => (
-                                            <span key={i} style={{ fontSize: '10px', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                                            <span key={i} style={{ 
+                                              fontSize: '10px', 
+                                              fontWeight: '700',
+                                              fontFamily: 'JetBrains Mono, monospace',
+                                              background: isCritical ? 'var(--accent-red-soft)' : 'var(--accent-orange-soft)', 
+                                              border: `1px solid ${isCritical ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'}`,
+                                              padding: '4px 10px', 
+                                              borderRadius: '6px', 
+                                              color: isCritical ? 'var(--accent-red)' : 'var(--accent-orange)' 
+                                            }}>
                                               {r.trim()}
                                             </span>
                                           ))}

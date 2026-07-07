@@ -6,6 +6,83 @@ import {
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
 
+function TopologyMap({ threatPercentage, hasThreat }) {
+  const isDanger = threatPercentage > 30 || hasThreat;
+  
+  return (
+    <div style={{ 
+      padding: '24px', 
+      background: 'rgba(255, 255, 255, 0.01)', 
+      borderRadius: '12px', 
+      border: '1px solid var(--border-color)', 
+      marginBottom: '24px',
+      boxShadow: 'inset 0 0 20px rgba(0,0,0,0.2)'
+    }}>
+      <svg viewBox="0 0 800 180" width="100%" height="100%" style={{ display: 'block', overflow: 'visible' }}>
+        <defs>
+          <filter id="neon-glow-blue" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <filter id="neon-glow-red" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+
+        {/* --- Path Connections --- */}
+        {/* Gateway -> AI Engine */}
+        <path d="M 100 80 L 300 80" stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-blue)'} strokeWidth="6" opacity="0.1" strokeLinecap="round" />
+        <path d="M 100 80 L 300 80" stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-cyan)'} strokeWidth="2" strokeDasharray="8 12" strokeLinecap="round" className="laser-line" style={{ animationDuration: isDanger ? '0.6s' : '1.5s' }} />
+
+        {/* AI Engine -> Firewall */}
+        <path d="M 300 80 L 500 80" stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-blue)'} strokeWidth="6" opacity="0.1" strokeLinecap="round" />
+        <path d="M 300 80 L 500 80" stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-cyan)'} strokeWidth="2" strokeDasharray="8 12" strokeLinecap="round" className="laser-line" style={{ animationDuration: isDanger ? '0.6s' : '1.5s' }} />
+
+        {/* Firewall -> Clients */}
+        <path d="M 500 80 L 700 80" stroke="var(--accent-green)" strokeWidth="6" opacity="0.1" strokeLinecap="round" />
+        <path d="M 500 80 L 700 80" stroke="var(--accent-green)" strokeWidth="2" strokeDasharray="8 12" strokeLinecap="round" className="laser-line" style={{ animationDuration: '2s' }} />
+
+        {/* --- Gateway Node --- */}
+        <g transform="translate(100, 80)">
+          <circle r="26" fill="var(--bg-dark)" stroke="var(--border-color)" strokeWidth="2" />
+          <circle r="20" fill="rgba(99, 102, 241, 0.05)" stroke="var(--accent-blue)" strokeWidth="1" />
+          <text y="6" fontSize="22" textAnchor="middle">🌐</text>
+          <text y="50" fontSize="10" fontWeight="900" fill="var(--text-muted)" textAnchor="middle" letterSpacing="1px">EXTERNAL WAN</text>
+          <text y="64" fontSize="8" fontWeight="800" fill="var(--accent-cyan)" textAnchor="middle" letterSpacing="0.5px">ACTIVE</text>
+        </g>
+
+        {/* --- AI Engine Node --- */}
+        <g transform="translate(300, 80)">
+          <circle r="28" fill="var(--bg-dark)" stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-blue)'} strokeWidth="2" style={{ filter: isDanger ? 'url(#neon-glow-red)' : 'none', transition: 'all 0.3s' }} />
+          <circle r="22" fill={isDanger ? 'var(--accent-red-soft)' : 'rgba(99, 102, 241, 0.05)'} stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-blue)'} strokeWidth="1" />
+          <text y="7" fontSize="24" textAnchor="middle" className={isDanger ? 'pulse-heavy' : ''}>🧠</text>
+          <text y="50" fontSize="10" fontWeight="900" fill="var(--text-muted)" textAnchor="middle" letterSpacing="1px">AI-IDS ENGINE</text>
+          <text y="64" fontSize="8" fontWeight="800" fill={isDanger ? 'var(--accent-red)' : 'var(--accent-green)'} textAnchor="middle" letterSpacing="0.5px">{isDanger ? 'THREAT INBOUND' : 'EVALUATING'}</text>
+        </g>
+
+        {/* --- Firewall Node --- */}
+        <g transform="translate(500, 80)">
+          <circle r="28" fill="var(--bg-dark)" stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-blue)'} strokeWidth="2" style={{ filter: isDanger ? 'url(#neon-glow-red)' : 'none', transition: 'all 0.3s' }} />
+          <circle r="22" fill={isDanger ? 'var(--accent-red-soft)' : 'rgba(99, 102, 241, 0.05)'} stroke={isDanger ? 'var(--accent-red)' : 'var(--accent-blue)'} strokeWidth="1" />
+          <text y="6" fontSize="24" textAnchor="middle" className={isDanger ? 'pulse-heavy' : ''}>🛡️</text>
+          <text y="50" fontSize="10" fontWeight="900" fill="var(--text-muted)" textAnchor="middle" letterSpacing="1px">FIREWALL</text>
+          <text y="64" fontSize="8" fontWeight="800" fill={isDanger ? 'var(--accent-red)' : 'var(--accent-green)'} textAnchor="middle" letterSpacing="0.5px">{isDanger ? 'FILTERING ACTIVE' : 'SHIELDED'}</text>
+        </g>
+
+        {/* --- Clients Node --- */}
+        <g transform="translate(700, 80)">
+          <circle r="26" fill="var(--bg-dark)" stroke="var(--accent-green)" strokeWidth="2" />
+          <circle r="20" fill="rgba(16, 185, 129, 0.05)" stroke="var(--accent-green)" strokeWidth="1" />
+          <text y="6" fontSize="22" textAnchor="middle">💻</text>
+          <text y="50" fontSize="10" fontWeight="900" fill="var(--text-muted)" textAnchor="middle" letterSpacing="1px">SECURE LAN</text>
+          <text y="64" fontSize="8" fontWeight="800" fill="var(--accent-green)" textAnchor="middle" letterSpacing="0.5px">PROTECTED</text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export default function Overview() {
   const navigate = useNavigate()
   const [data, setData] = useState(null)
@@ -76,14 +153,14 @@ export default function Overview() {
 
       {/* 1. Attack Types Summary Grid */}
       {attackTypes.length > 0 && (
-        <div className="attack-type-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+        <div className="attack-type-grid">
           {attackTypes.slice(0, 8).map((t, i) => {
             const theme = getAttackColor(t.attack_type);
             return (
               <div 
                 key={i} 
-                className="dash-card dash-card-mesh animate-in hover-glow" 
-                style={{ borderLeft: `5px solid ${theme.color}`, padding: '24px', cursor: 'pointer' }}
+                className="dash-card dash-card-mesh animate-stagger hover-glow" 
+                style={{ borderLeft: `5px solid ${theme.color}`, padding: '24px', cursor: 'pointer', '--i': i }}
                 onClick={() => navigate(`/attack-types/${t.attack_type}`)}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -111,7 +188,7 @@ export default function Overview() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
         
         {/* Top: Vector Graph */}
-        <div className="dash-card dash-card-mesh" style={{ minHeight: '380px', background: 'var(--dash-card-gradient)' }}>
+        <div className="dash-card dash-card-mesh animate-stagger" style={{ minHeight: '380px', '--i': 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3 className="section-title" style={{ margin: 0 }}>Vectors</h3>
             <span style={{ fontSize: '9px', color: 'var(--accent-green)', fontWeight: '800' }}>IN/OUT</span>
@@ -123,11 +200,11 @@ export default function Overview() {
                   <AreaChart data={processedChartData}>
                     <defs>
                       <linearGradient id="colorIn" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.3}/>
+                        <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.25}/>
                         <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="colorOut" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--accent-blue)" stopOpacity={0.3}/>
+                        <stop offset="5%" stopColor="var(--accent-blue)" stopOpacity={0.25}/>
                         <stop offset="95%" stopColor="var(--accent-blue)" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
@@ -142,7 +219,7 @@ export default function Overview() {
                     />
                     <YAxis hide />
                     <Tooltip 
-                      contentStyle={{ background: 'var(--bg-card)', border: 'none', borderRadius: '8px', fontSize: '10px' }}
+                      contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '12px', fontSize: '10px', backdropFilter: 'blur(10px)', color: 'var(--text-primary)' }}
                       labelFormatter={(label, payload) => payload?.[0]?.payload?.time || label}
                     />
                     <Area type="monotone" dataKey="incoming" stroke="var(--accent-green)" strokeWidth={2} fill="url(#colorIn)" name="Incoming" />
@@ -155,10 +232,10 @@ export default function Overview() {
         </div>
 
         {/* Bottom Split Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+        <div className="split-grid">
           
           {/* Bottom Left: Protocol Graph */}
-          <div className="dash-card dash-card-mesh" style={{ minHeight: '380px', background: 'var(--dash-card-gradient)' }}>
+          <div className="dash-card dash-card-mesh animate-stagger" style={{ minHeight: '380px', '--i': 5 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 className="section-title" style={{ margin: 0 }}>Protocols</h3>
               <span style={{ fontSize: '9px', color: 'var(--accent-blue)', fontWeight: '800' }}>TCP/UDP</span>
@@ -170,11 +247,11 @@ export default function Overview() {
                     <AreaChart data={processedChartData}>
                       <defs>
                         <linearGradient id="colorTcp" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--accent-blue)" stopOpacity={0.3}/>
+                          <stop offset="5%" stopColor="var(--accent-blue)" stopOpacity={0.25}/>
                           <stop offset="95%" stopColor="var(--accent-blue)" stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="colorUdp" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--accent-orange)" stopOpacity={0.3}/>
+                          <stop offset="5%" stopColor="var(--accent-orange)" stopOpacity={0.25}/>
                           <stop offset="95%" stopColor="var(--accent-orange)" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
@@ -189,7 +266,7 @@ export default function Overview() {
                       />
                       <YAxis hide />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-card)', border: 'none', borderRadius: '8px', fontSize: '10px' }}
+                        contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '12px', fontSize: '10px', backdropFilter: 'blur(10px)', color: 'var(--text-primary)' }}
                         labelFormatter={(label, payload) => payload?.[0]?.payload?.time || label}
                       />
                       <Area type="monotone" dataKey="tcp" stroke="var(--accent-blue)" strokeWidth={2} fill="url(#colorTcp)" name="TCP" />
@@ -202,24 +279,32 @@ export default function Overview() {
           </div>
 
           {/* Bottom Right: RISK METER */}
-          <div className="dash-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--dash-card-gradient)' }}>
+          <div className="dash-card animate-stagger" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', '--i': 6 }}>
               <h3 className="section-title" style={{ marginBottom: '16px' }}>Threat Index</h3>
               <div className="risk-meter-container">
                   <div className="risk-circle" style={{ 
-                      width: '150px', height: '150px', 
-                      border: '8px solid var(--accent-red-soft)', 
-                      boxShadow: `0 0 40px ${threatPercentage > 50 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)'}`,
+                      width: '160px', height: '160px', 
+                      border: '8px solid var(--border-color)',
+                      boxShadow: `0 0 30px ${threatPercentage > 70 ? 'rgba(239, 68, 68, 0.12)' : (threatPercentage > 30 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(99, 102, 241, 0.12)')}`,
+                      borderColor: threatPercentage > 70 ? 'var(--accent-red-soft)' : (threatPercentage > 30 ? 'var(--accent-orange-soft)' : 'var(--accent-blue-soft)'),
                   }}>
-                      <div className="label">Composite</div>
+                      {/* Holographic Radar Sweep Overlay */}
+                      <div className="radar-sweep" style={{
+                        background: `conic-gradient(from 0deg, ${threatPercentage > 70 ? 'var(--accent-red)' : (threatPercentage > 30 ? 'var(--accent-orange)' : 'var(--accent-blue)')} 0deg, transparent 180deg, transparent 360deg)`
+                      }}></div>
+
+                      <div className="label" style={{ zIndex: 2 }}>Composite</div>
                       <div className="value" style={{ 
-                          fontSize: '36px', 
-                          color: threatPercentage > 80 ? 'var(--accent-red)' : (threatPercentage > 40 ? 'var(--accent-orange)' : 'var(--accent-blue)')
+                          fontSize: '38px', 
+                          color: threatPercentage > 70 ? 'var(--accent-red)' : (threatPercentage > 30 ? 'var(--accent-orange)' : 'var(--accent-blue)'),
+                          zIndex: 2
                       }}>{threatPercentage}%</div>
                       <div style={{ 
                           fontSize: '9px', fontWeight: '900', marginTop: '5px', letterSpacing: '2px',
-                          color: threatPercentage > 80 ? 'var(--accent-red)' : (threatPercentage > 40 ? 'var(--accent-orange)' : 'var(--accent-blue)')
+                          color: threatPercentage > 70 ? 'var(--accent-red)' : (threatPercentage > 30 ? 'var(--accent-orange)' : 'var(--accent-blue)'),
+                          zIndex: 2
                       }}>
-                          {threatPercentage > 80 ? 'EMERGENCY' : (threatPercentage > 40 ? 'ELEVATED' : 'SECURE')}
+                          {threatPercentage > 70 ? 'EMERGENCY' : (threatPercentage > 30 ? 'ELEVATED' : 'SECURE')}
                       </div>
                   </div>
               </div>
@@ -233,11 +318,14 @@ export default function Overview() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* 1. Network Status (Report Table) */}
-        <div className="dash-card">
+        <div className="dash-card animate-stagger" style={{ '--i': 7 }}>
            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <div style={{ width: '4px', height: '16px', background: 'var(--accent-blue)', borderRadius: '4px' }}></div>
               <h3 className="section-title" style={{ margin: 0 }}>Network Infrastructure Report</h3>
            </div>
+           
+           <TopologyMap threatPercentage={threatPercentage} hasThreat={data?.alert_logs?.length > 0} />
+
            <div className="table-container">
              <table className="premium-table">
                <thead>
@@ -263,7 +351,7 @@ export default function Overview() {
         </div>
 
         {/* 2. Alert Logs (Detailed Table) */}
-        <div className="dash-card">
+        <div className="dash-card animate-stagger" style={{ '--i': 8 }}>
            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <div style={{ width: '4px', height: '16px', background: 'var(--accent-red)', borderRadius: '4px' }}></div>
               <h3 className="section-title" style={{ margin: 0 }}>Incident Response Logs (Critical)</h3>
@@ -303,7 +391,7 @@ export default function Overview() {
         </div>
 
         {/* 3. Blocked IP Table (Active Containments) */}
-        <div className="dash-card">
+        <div className="dash-card animate-stagger" style={{ '--i': 9 }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '4px', height: '16px', background: 'var(--accent-orange)', borderRadius: '4px' }}></div>

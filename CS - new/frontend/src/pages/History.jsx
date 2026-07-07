@@ -85,32 +85,34 @@ export default function History() {
       </div>
 
       <div className="dash-card">
-        <table className="premium-table">
-          <thead>
-            <tr>
-              <th>Timestamp</th>
-              <th>Source IP</th>
-              <th>Dest IP</th>
-              <th>Attack Type</th>
-              <th>Decision</th>
-              <th>Final Risk</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log, i) => (
-              <tr key={i}>
-                <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{log.Timestamp}</td>
-                <td style={{ fontWeight: '700' }}>{log.Source_IP}</td>
-                <td>{log.Dest_IP}</td>
-                <td style={{ color: log.Attack_Type !== 'Normal' ? '#ef4444' : 'var(--accent-green)', fontWeight: '700' }}>{log.Attack_Type}</td>
-                <td><span className={`badge-premium ${log.Decision === 'BLOCK' ? 'badge-block' : 'badge-allow'}`}>{log.Decision}</span></td>
-                <td style={{ fontWeight: '800' }}>{(log.Final_Risk * 100).toFixed(0)}%</td>
+        <div className="table-container">
+          <table className="premium-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Source IP</th>
+                <th>Dest IP</th>
+                <th>Attack Type</th>
+                <th>Decision</th>
+                <th>Final Risk</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logs.map((log, i) => (
+                <tr key={i}>
+                  <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{log.Timestamp}</td>
+                  <td style={{ fontWeight: '700' }}>{log.Source_IP}</td>
+                  <td>{log.Dest_IP}</td>
+                  <td style={{ color: log.Attack_Type !== 'Normal' ? '#ef4444' : 'var(--accent-green)', fontWeight: '700' }}>{log.Attack_Type}</td>
+                  <td><span className={`badge-premium ${log.Decision === 'BLOCK' ? 'badge-block' : 'badge-allow'}`}>{log.Decision}</span></td>
+                  <td style={{ fontWeight: '800' }}>{(log.Final_Risk * 100).toFixed(0)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         
-        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center' }}>
+        <div style={{ padding: '20px', display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center' }}>
             <button onClick={() => setPage(p => Math.max(1, p-1))} className="nav-item" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer' }}>PREV</button>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>PAGE {page}</span>
             <button onClick={() => setPage(p => p + 1)} className="nav-item" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer' }}>NEXT</button>
