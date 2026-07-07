@@ -9,10 +9,17 @@ export default function Reports() {
     fetchAPI('/reports').then(res => {
       setData(res)
       setLoading(false)
-    })
+    }).catch(() => setLoading(false))
   }, [])
 
-  if (loading) return <div style={{ padding: '100px', textAlign: 'center', color: '#64748b' }}>Generating Forensic Intelligence...</div>
+  if (loading) return (
+    <div className="loading-screen">
+      <div className="loading-spinner"></div>
+      <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '2px' }}>GENERATING FORENSIC INTELLIGENCE...</div>
+    </div>
+  )
+
+  const totalPackets = data?.total_packets || 0
 
   return (
     <div className="animate-in">
@@ -23,16 +30,16 @@ export default function Reports() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' }}>
+      <div className="stagger-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '24px', marginBottom: '32px' }}>
         <div className="dash-card">
           <div className="stat-label-premium">Total Packets</div>
-          <div className="stat-value-premium">{data?.total_packets || 0}</div>
-          <div style={{ color: 'var(--accent-green)', fontSize: '10px', marginTop: '4px' }}>↑ 12% FROM LAST HOUR</div>
+          <div className="stat-value-premium">{totalPackets.toLocaleString()}</div>
+          <div style={{ color: 'var(--accent-cyan)', fontSize: '10px', marginTop: '4px', fontWeight: 700 }}>AGGREGATE VOLUME</div>
         </div>
         <div className="dash-card">
           <div className="stat-label-premium">Threat Ratio</div>
           <div className="stat-value-premium">{data?.threat_percentage || 0}%</div>
-          <div style={{ color: 'var(--accent-red)', fontSize: '10px', marginTop: '4px' }}>BASED ON NEURAL SCORE</div>
+          <div style={{ color: 'var(--accent-red)', fontSize: '10px', marginTop: '4px', fontWeight: 700 }}>BASED ON NEURAL SCORE</div>
         </div>
         <div className="dash-card">
           <div className="stat-label-premium">Avg Throughput</div>
@@ -44,52 +51,54 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="main-column">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
           <div className="dash-card">
-            <h3 style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '20px' }}>Top Attackers</h3>
-            <table className="premium-table">
-              <thead>
-                <tr>
-                  <th>Source IP</th>
-                  <th>Threat Count</th>
-                  <th>Avg Risk</th>
-                  <th>Peak PPS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.top_attackers?.map((a, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: '700' }}>{a.ip}</td>
-                    <td>{a.threat_count}</td>
-                    <td><span style={{ color: a.avg_risk > 0.7 ? '#ef4444' : '#f59e0b' }}>{(a.avg_risk * 100).toFixed(0)}%</span></td>
-                    <td>{a.max_pps}</td>
+            <h3 style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '20px', letterSpacing: '1.5px', color: 'var(--text-muted)' }}>Top Attackers</h3>
+            <div className="table-scroll">
+              <table className="premium-table">
+                <thead>
+                  <tr>
+                    <th>Source IP</th>
+                    <th>Threat Count</th>
+                    <th>Avg Risk</th>
+                    <th>Peak PPS</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="side-column">
-            <div className="dash-card">
-                <h3 style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '16px' }}>Decision Mix</h3>
-                {Object.entries(data?.decisions || {}).map(([key, val]) => (
-                    <div key={key} style={{ marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: '700', marginBottom: '4px' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>{key}</span>
-                            <span>{val}</span>
-                        </div>
-                        <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ 
-                                height: '100%', 
-                                width: `${(val / data.total_packets * 100).toFixed(0)}%`,
-                                background: key === 'BLOCK' ? 'var(--accent-red)' : (key === 'ALLOW' ? 'var(--accent-green)' : 'var(--accent-orange)')
-                            }}></div>
-                        </div>
-                    </div>
-                ))}
+                </thead>
+                <tbody>
+                  {data?.top_attackers?.map((a, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: '700' }}>{a.ip}</td>
+                      <td>{a.threat_count}</td>
+                      <td><span style={{ color: a.avg_risk > 0.7 ? 'var(--accent-red)' : 'var(--accent-orange)', fontWeight: 800 }}>{(a.avg_risk * 100).toFixed(0)}%</span></td>
+                      <td>{a.max_pps}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </div>
+
+          <div className="dash-card">
+              <h3 style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '1.5px', color: 'var(--text-muted)' }}>Decision Mix</h3>
+              {Object.entries(data?.decisions || {}).map(([key, val]) => (
+                  <div key={key} style={{ marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: '700', marginBottom: '6px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>{key}</span>
+                          <span style={{ fontWeight: 800 }}>{val.toLocaleString()}</span>
+                      </div>
+                      <div style={{ height: '6px', background: 'var(--bg-surface)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ 
+                              height: '100%', 
+                              width: `${totalPackets > 0 ? (val / totalPackets * 100).toFixed(0) : 0}%`,
+                              background: key === 'BLOCK' ? 'var(--accent-red)' : (key === 'ALLOW' ? 'var(--accent-green)' : 'var(--accent-orange)'),
+                              borderRadius: '4px',
+                              transition: 'width 0.8s ease'
+                          }}></div>
+                      </div>
+                  </div>
+              ))}
+          </div>
         </div>
       </div>
     </div>

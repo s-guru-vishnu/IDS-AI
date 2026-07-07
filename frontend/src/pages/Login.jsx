@@ -75,7 +75,6 @@ export default function Login({ setAuthToken }) {
     setLoading(false)
   }
 
-  // Underlined Input Style
   const inputStyle = {
     width: '100%',
     padding: '12px 0',
@@ -100,32 +99,48 @@ export default function Login({ setAuthToken }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)', padding: '40px 20px' }}>
-      <div className="dash-card animate-in shadow-premium" style={{ 
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)', padding: '40px 20px', position: 'relative', overflow: 'hidden' }}>
+      
+      {/* Floating particles background */}
+      <div className="particles-bg">
+        {[...Array(8)].map((_, i) => <div key={i} className="particle" />)}
+      </div>
+
+      <div className="dash-card animate-in" style={{ 
         maxWidth: '460px', 
         width: '100%', 
         padding: '56px 48px', 
         background: 'var(--bg-card)', 
         borderRadius: '32px',
-        border: '1px solid rgba(255, 255, 255, 0.03)'
+        border: '1px solid var(--border-color)',
+        position: 'relative',
+        zIndex: 1,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 0 40px var(--glow-color)'
       }}>
         
         {/* Title Section */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <div style={{ color: 'var(--accent-red)', marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
-            <Icons.Shield />
+          <div className="avatar-3d" style={{ color: 'var(--accent-red)', marginBottom: '16px', display: 'flex', justifyContent: 'center', width: '56px', height: '56px', margin: '0 auto 16px', position: 'relative' }}>
+            <div style={{ 
+              width: '56px', height: '56px', borderRadius: '50%', 
+              background: 'linear-gradient(135deg, var(--accent-red), #991b1b)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(220, 38, 38, 0.3)'
+            }}>
+              <Icons.Shield />
+            </div>
           </div>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px' }}>
-            {isRegister ? 'Create Account' : 'Login Now'}
+          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px' }}>
+            {isRegister ? 'Create Account' : 'CyberMatrix'}
           </h1>
           <p style={{ margin: '12px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
-             {isRegister ? 'Initialize your tactical profile.' : 'Verify authorization for the tactical dashboard.'}
+             {isRegister ? 'Initialize your tactical profile.' : 'Verify authorization for the defense platform.'}
           </p>
         </div>
         
         <form onSubmit={handleSubmit}>
           {error && (
-            <div className="animate-in" style={{ background: 'rgba(220, 38, 38, 0.08)', color: 'var(--accent-red)', padding: '12px', borderRadius: '8px', fontSize: '11px', marginBottom: '24px', border: '1px solid rgba(220, 38, 38, 0.2)', fontWeight: 700, textAlign: 'center' }}>
+            <div className="animate-in" style={{ background: 'rgba(220, 38, 38, 0.08)', color: 'var(--accent-red)', padding: '12px', borderRadius: '10px', fontSize: '11px', marginBottom: '24px', border: '1px solid rgba(220, 38, 38, 0.2)', fontWeight: 700, textAlign: 'center' }}>
               {error}
             </div>
           )}
@@ -229,10 +244,10 @@ export default function Login({ setAuthToken }) {
           
           <button 
             type="submit" 
-            className="hover-glow"
+            className="btn-3d"
             style={{ 
-                width: '100%', padding: '16px', borderRadius: '40px', background: 'var(--accent-red)', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', transition: 'all 0.3s', 
-                opacity: loading ? 0.7 : 1, fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '40px', boxShadow: '0 8px 32px rgba(220, 38, 38, 0.15)'
+                width: '100%', padding: '16px', borderRadius: '40px', background: 'linear-gradient(135deg, var(--accent-red), #991b1b)', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', transition: 'all 0.3s', 
+                opacity: loading ? 0.7 : 1, fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '40px', boxShadow: '0 8px 32px rgba(220, 38, 38, 0.2)'
             }}
           >
             {loading ? 'SYNCHRONIZING...' : (isRegister ? 'Sign Up' : 'Login')}
@@ -245,9 +260,9 @@ export default function Login({ setAuthToken }) {
             </p>
             <button 
                 onClick={() => { setIsRegister(!isRegister); setError(''); }}
-                className="hover-glow"
+                className="btn-3d"
                 style={{ 
-                    width: '100%', padding: '16px', borderRadius: '40px', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', fontWeight: 900, border: '1px solid var(--border-color)', 
+                    width: '100%', padding: '16px', borderRadius: '40px', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontWeight: 900, border: '1px solid var(--border-color)', 
                     cursor: 'pointer', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase'
                 }}
             >

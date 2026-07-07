@@ -37,88 +37,144 @@ const Icons = {
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
+  ),
+  Menu: () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  ),
+  Close: () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
   )
 }
 
 export default function Navbar() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light')
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)
   }, [theme])
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light')
   }
 
   return (
-    <header className="top-nav">
-      <div className="nav-left">
-        <div className="logo-container" style={{ marginRight: '16px' }}>
-          <div className="logo-badge" style={{ background: 'var(--accent-red)' }}>
-            <Icons.Shield />
+    <>
+      <header className="top-nav">
+        <div className="nav-left">
+          <button className="hamburger-btn" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+            {mobileOpen ? <Icons.Close /> : <Icons.Menu />}
+          </button>
+
+          <div className="logo-container" style={{ marginRight: '16px' }}>
+            <div className="logo-badge" style={{ background: 'var(--accent-red)' }}>
+              <Icons.Shield />
+            </div>
+            <div className="logo-text" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <h1 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>CyberMatrix</h1>
+              <span style={{ margin: 0, fontSize: '9px', fontWeight: '700', opacity: 0.6, letterSpacing: '1px' }}>CYBER DEFENSE PLATFORM</span>
+            </div>
           </div>
-          <div className="logo-text" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h1 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>AI-IDS</h1>
-            <span style={{ margin: 0, fontSize: '9px', fontWeight: '700', opacity: 0.6, letterSpacing: '1px' }}>STEALTH SECURITY SYSTEMS</span>
-          </div>
+
+          <nav className="nav-links">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/'}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                style={{ fontSize: '13px', fontWeight: '700' }}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
         </div>
 
-        <nav className="nav-links">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-              style={{ fontSize: '13px', fontWeight: '700' }}
+        <div className="nav-right">
+          <div className="engine-status" style={{ border: 'none', background: 'var(--accent-blue-soft)', color: 'var(--accent-blue)', borderRadius: '10px' }}>
+            <div className="status-pulse" style={{ background: 'var(--accent-blue)' }}></div>
+            DEFENSE ENGINE ACTIVE
+          </div>
+          
+          <button 
+            onClick={toggleTheme}
+            title="Toggle Day/Night Mode"
+            style={{ 
+              padding: '8px', 
+              background: 'none', 
+              border: 'none',
+              borderRadius: '50%', 
+              cursor: 'pointer', 
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(15deg)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
             >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-      </div>
+            {theme === 'light' ? <Icons.Moon /> : <Icons.Sun />}
+          </button>
 
-      <div className="nav-right">
-        <div className="engine-status" style={{ border: 'none', background: 'var(--accent-blue-soft)', color: 'var(--accent-blue)', borderRadius: '10px' }}>
-          <div className="status-pulse" style={{ background: 'var(--accent-blue)' }}></div>
-          DEFENSE ENGINE ACTIVE
+          <NavLink 
+            to="/profile/u/me"
+            style={({ isActive }) => ({ 
+               padding: '8px', cursor: 'pointer', transition: 'color 0.2s',
+               color: isActive ? 'var(--text-primary)' : 'var(--text-muted)'
+            })}
+            onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseOut={(e) => { if (!e.currentTarget.classList.contains('active')) e.currentTarget.style.color = 'var(--text-muted)' }}
+          >   
+              <Icons.User />
+          </NavLink>
         </div>
-        
-        <button 
-          onClick={toggleTheme}
-          title="Toggle Day/Night Mode"
-          style={{ 
-            padding: '8px', 
-            background: 'none', 
-            border: 'none',
-            borderRadius: '50%', 
-            cursor: 'pointer', 
-            color: 'var(--text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'transform 0.2s'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(15deg)'}
-          onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
-          >
-          {theme === 'light' ? <Icons.Moon /> : <Icons.Sun />}
-        </button>
+      </header>
 
-        <NavLink 
+      {/* Mobile Menu Overlay */}
+      {mobileOpen && <div className="mobile-menu-overlay active" onClick={() => setMobileOpen(false)} />}
+      
+      {/* Mobile Menu Drawer */}
+      <nav className={`mobile-menu ${mobileOpen ? 'active' : ''}`}>
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/'}
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            onClick={() => setMobileOpen(false)}
+          >
+            {item.label}
+          </NavLink>
+        ))}
+        <NavLink
           to="/profile/u/me"
-          style={({ isActive }) => ({ 
-             padding: '8px', cursor: 'pointer', transition: 'color 0.2s',
-             color: isActive ? 'var(--text-primary)' : 'var(--text-muted)'
-          })}
-          onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseOut={(e) => { if (!e.currentTarget.classList.contains('active')) e.currentTarget.style.color = 'var(--text-muted)' }}
-        >   
-            <Icons.User />
+          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={() => setMobileOpen(false)}
+          style={{ marginTop: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}
+        >
+          Profile & Settings
         </NavLink>
-      </div>
-    </header>
+      </nav>
+    </>
   )
 }

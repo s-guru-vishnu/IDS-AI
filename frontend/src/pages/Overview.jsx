@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchAPI, getAttackColor } from '../utils/IDS_API'
 import { 
-  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, Legend
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer
 } from 'recharts'
 
 export default function Overview() {
@@ -37,14 +37,14 @@ export default function Overview() {
   }
 
   if (loading && !data) return (
-    <div style={{ display: 'flex', height: '60vh', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px' }}>
-      <div className="status-pulse" style={{ width: '40px', height: '40px', background: 'var(--accent-blue)' }}></div>
+    <div className="loading-screen">
+      <div className="loading-spinner"></div>
       <div style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '2px' }}>SYNCING STRATEGIC CORE...</div>
     </div>
   )
 
   if (error && !data) return (
-    <div style={{ display: 'flex', height: '60vh', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px' }}>
+    <div className="loading-screen">
       <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--accent-red)' }}>CONNECTION OFFLINE</div>
       <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{error}</div>
     </div>
@@ -54,7 +54,7 @@ export default function Overview() {
 
   let lastMinute = null;
   const processedChartData = data?.chart_data?.map(d => {
-    const currentMinute = d?.time?.substring(0, 5); // Extract HH:MM
+    const currentMinute = d?.time?.substring(0, 5);
     if (currentMinute && currentMinute !== lastMinute) {
       lastMinute = currentMinute;
       return { ...d, displayTime: currentMinute };
@@ -66,7 +66,7 @@ export default function Overview() {
     <div className="animate-in" style={{ paddingBottom: '60px' }}>
       <div className="page-intro">
         <div>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             System Intelligence
             <span className="live-badge"><span></span> REAL-TIME ENGINE</span>
           </h2>
@@ -76,22 +76,22 @@ export default function Overview() {
 
       {/* 1. Attack Types Summary Grid */}
       {attackTypes.length > 0 && (
-        <div className="attack-type-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+        <div className="stagger-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px', marginBottom: '32px' }}>
           {attackTypes.slice(0, 8).map((t, i) => {
             const theme = getAttackColor(t.attack_type);
             return (
               <div 
                 key={i} 
-                className="dash-card dash-card-mesh animate-in hover-glow" 
+                className="dash-card dash-card-mesh" 
                 style={{ borderLeft: `5px solid ${theme.color}`, padding: '24px', cursor: 'pointer' }}
                 onClick={() => navigate(`/attack-types/${t.attack_type}`)}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', zIndex: 1 }}>
                   <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', opacity: 0.8, letterSpacing: '1px' }}>{t.attack_type}</div>
                   <div style={{ fontSize: '38px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: '1.1', letterSpacing: '-1px' }}>{t.count.toLocaleString()}</div>
                 </div>
                 
-                <div style={{ marginTop: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                <div style={{ marginTop: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border-color)', position: 'relative', zIndex: 1 }}>
                     <div>
                         <div style={{ fontSize: '8px', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>AVERAGE RISK</div>
                         <div style={{ fontSize: '15px', fontWeight: '900', color: theme.color }}>{(t.avg_risk * 100).toFixed(1)}%</div>
@@ -107,12 +107,12 @@ export default function Overview() {
         </div>
       )}
 
-      {/* 2. DYNAMIC INTEL GRID (Restructured) */}
+      {/* 2. DYNAMIC INTEL GRID */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
         
         {/* Top: Vector Graph */}
-        <div className="dash-card dash-card-mesh" style={{ minHeight: '380px', background: 'var(--dash-card-gradient)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div className="dash-card dash-card-mesh" style={{ minHeight: '380px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
             <h3 className="section-title" style={{ margin: 0 }}>Vectors</h3>
             <span style={{ fontSize: '9px', color: 'var(--accent-green)', fontWeight: '800' }}>IN/OUT</span>
           </div>
@@ -142,7 +142,7 @@ export default function Overview() {
                     />
                     <YAxis hide />
                     <Tooltip 
-                      contentStyle={{ background: 'var(--bg-card)', border: 'none', borderRadius: '8px', fontSize: '10px' }}
+                      contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', fontSize: '10px', boxShadow: '0 8px 30px rgba(0,0,0,0.2)' }}
                       labelFormatter={(label, payload) => payload?.[0]?.payload?.time || label}
                     />
                     <Area type="monotone" dataKey="incoming" stroke="var(--accent-green)" strokeWidth={2} fill="url(#colorIn)" name="Incoming" />
@@ -158,8 +158,8 @@ export default function Overview() {
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
           
           {/* Bottom Left: Protocol Graph */}
-          <div className="dash-card dash-card-mesh" style={{ minHeight: '380px', background: 'var(--dash-card-gradient)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div className="dash-card dash-card-mesh" style={{ minHeight: '380px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
               <h3 className="section-title" style={{ margin: 0 }}>Protocols</h3>
               <span style={{ fontSize: '9px', color: 'var(--accent-blue)', fontWeight: '800' }}>TCP/UDP</span>
             </div>
@@ -189,7 +189,7 @@ export default function Overview() {
                       />
                       <YAxis hide />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-card)', border: 'none', borderRadius: '8px', fontSize: '10px' }}
+                        contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', fontSize: '10px', boxShadow: '0 8px 30px rgba(0,0,0,0.2)' }}
                         labelFormatter={(label, payload) => payload?.[0]?.payload?.time || label}
                       />
                       <Area type="monotone" dataKey="tcp" stroke="var(--accent-blue)" strokeWidth={2} fill="url(#colorTcp)" name="TCP" />
@@ -202,10 +202,10 @@ export default function Overview() {
           </div>
 
           {/* Bottom Right: RISK METER */}
-          <div className="dash-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--dash-card-gradient)' }}>
+          <div className="dash-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <h3 className="section-title" style={{ marginBottom: '16px' }}>Threat Index</h3>
               <div className="risk-meter-container">
-                  <div className="risk-circle" style={{ 
+                  <div className="risk-circle glow-pulse" style={{ 
                       width: '150px', height: '150px', 
                       border: '8px solid var(--accent-red-soft)', 
                       boxShadow: `0 0 40px ${threatPercentage > 50 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)'}`,
@@ -229,16 +229,16 @@ export default function Overview() {
 
       </div>
 
-      {/* 4. PREMIUM TABLES SECTION (Stacked Vertically) */}
+      {/* 4. PREMIUM TABLES SECTION */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
-        {/* 1. Network Status (Report Table) */}
+        {/* 1. Network Status */}
         <div className="dash-card">
            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <div style={{ width: '4px', height: '16px', background: 'var(--accent-blue)', borderRadius: '4px' }}></div>
               <h3 className="section-title" style={{ margin: 0 }}>Network Infrastructure Report</h3>
            </div>
-           <div className="table-container">
+           <div className="table-scroll">
              <table className="premium-table">
                <thead>
                  <tr>
@@ -262,13 +262,13 @@ export default function Overview() {
            </div>
         </div>
 
-        {/* 2. Alert Logs (Detailed Table) */}
+        {/* 2. Alert Logs */}
         <div className="dash-card">
            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <div style={{ width: '4px', height: '16px', background: 'var(--accent-red)', borderRadius: '4px' }}></div>
               <h3 className="section-title" style={{ margin: 0 }}>Incident Response Logs (Critical)</h3>
            </div>
-           <div className="table-container">
+           <div className="table-scroll">
              <table className="premium-table">
                <thead>
                  <tr>
@@ -302,16 +302,16 @@ export default function Overview() {
            </div>
         </div>
 
-        {/* 3. Blocked IP Table (Active Containments) */}
+        {/* 3. Blocked IP Table */}
         <div className="dash-card">
-           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '4px', height: '16px', background: 'var(--accent-orange)', borderRadius: '4px' }}></div>
                 <h3 className="section-title" style={{ margin: 0 }}>Active Threat Containment</h3>
              </div>
-             <Link to="/blocked-ips" style={{ fontSize: '10px', color: 'var(--accent-black)', textDecoration: 'none', fontWeight: '800', letterSpacing: '1px' }}>VIEW ALL &rarr;</Link>
+             <Link to="/blocked-ips" style={{ fontSize: '10px', color: 'var(--accent-blue)', textDecoration: 'none', fontWeight: '800', letterSpacing: '1px' }}>VIEW ALL &rarr;</Link>
            </div>
-           <div className="table-container">
+           <div className="table-scroll">
              <table className="premium-table">
                <thead>
                  <tr>
@@ -348,4 +348,3 @@ export default function Overview() {
     </div>
   )
 }
-
