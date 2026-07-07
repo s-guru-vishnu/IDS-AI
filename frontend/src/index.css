@@ -1,4 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@font-face {
+  font-family: 'Spaceline';
+  src: url('/Spaceline.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* Default: Light Mode (Day) */
@@ -84,7 +92,7 @@
 }
 
 body {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Spaceline', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-primary);
   min-height: 100vh;
@@ -94,7 +102,7 @@ body {
 }
 
 input, button, select, textarea {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Spaceline', sans-serif;
   font-size: inherit;
   color: inherit;
 }
@@ -412,7 +420,7 @@ input, button, select, textarea {
 .stat-value-premium {
   font-size: 32px;
   font-weight: 800;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Spaceline', sans-serif;
   color: var(--text-primary);
   letter-spacing: -1px;
 }

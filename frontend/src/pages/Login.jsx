@@ -86,7 +86,7 @@ export default function Login({ setAuthToken }) {
     transition: 'border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     fontSize: '15px',
     fontWeight: '500',
-    fontFamily: '"Space Grotesk", sans-serif'
+    fontFamily: '"Spaceline", sans-serif'
   };
 
   const labelStyle = {
