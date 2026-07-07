@@ -833,6 +833,27 @@ def blocked_ips():
 def attack_types():
     try:
         attack_type = request.args.get("type")
+        db_to_display = {
+            "Normal": "Normal IP Traffic",
+            "BENIGN": "Normal IP Traffic",
+            "Scan": "Port Scan",
+            "WAF_Injection": "WAF Injection",
+            "Slowloris": "Slowloris",
+            "Stretch": "Slowloris",
+            "MITM": "MITM",
+            "DoS": "DDoS",
+            "DDoS": "DDoS",
+            "UNKNOWN_ATTACK": None,  # Hide
+            "STEALTH_ATTACK": "Stealth Attack",
+            "HYBRID_ATTACK": "Hybrid Attack",
+            "HIGH_VOLUME_ATTACK": "High Volume Attack",
+            "KNOWN_ATTACKER": "Known Attacker",
+            "ZERO_DAY": "Zero-Day Attack",
+            "Anomaly": "Mixed Attacks",
+            "Chaos": "Mixed Attacks",
+            "AI_ATTACK": "AI Attack",
+            "AI_Attack": "AI Attack"
+        }
 
         if attack_type:
             # ── Drill-down: records for a specific attack type ──
@@ -858,8 +879,12 @@ def attack_types():
             per_page = min(per_page, 200)
             skip = (page - 1) * per_page
 
-            # Get records from batch_logs
-            query = {"Attack_Type": attack_type}
+            # Get records from batch_logs matching any raw DB type that maps to this display type
+            matching_types = [k for k, v in db_to_display.items() if v == attack_type]
+            if attack_type not in matching_types:
+                matching_types.append(attack_type)
+            query = {"Attack_Type": {"$in": matching_types}} if len(matching_types) > 1 else {"Attack_Type": attack_type}
+
             total_batch = logs_col.count_documents(query)
             batch_records = list(logs_col.find(query, {"_id": 0}).sort("Timestamp", -1).skip(skip).limit(per_page))
 
@@ -895,7 +920,7 @@ def attack_types():
 
             # Stats
             stats_pipeline = [
-                {"$match": {"Attack_Type": attack_type}},
+                {"$match": query},
                 {"$group": {
                     "_id": None,
                     "total": {"$sum": 1},
@@ -947,28 +972,6 @@ def attack_types():
             })
         else:
             # ── Summary: count of each attack type (Dynamic) ──
-            db_to_display = {
-                "Normal": "Normal IP Traffic",
-                "BENIGN": "Normal IP Traffic",
-                "Scan": "Port Scan",
-                "WAF_Injection": "WAF Injection",
-                "Slowloris": "Slowloris",
-                "Stretch": "Slowloris",
-                "MITM": "MITM",
-                "DoS": "DDoS",
-                "DDoS": "DDoS",
-                "UNKNOWN_ATTACK": None,  # Hide
-                "STEALTH_ATTACK": "Stealth Attack",
-                "HYBRID_ATTACK": "Hybrid Attack",
-                "HIGH_VOLUME_ATTACK": "High Volume Attack",
-                "KNOWN_ATTACKER": "Known Attacker",
-                "ZERO_DAY": "Zero-Day Attack",
-                "Anomaly": "Mixed Attacks",
-                "Chaos": "Mixed Attacks",
-                "AI_ATTACK": "AI Attack",
-                "AI_Attack": "AI Attack"
-            }
-
             # 1. Aggregate purely from active batch_logs
             pipeline = [
                 {"$match": {"Attack_Type": {"$exists": True, "$ne": None, "$ne": ""}}},

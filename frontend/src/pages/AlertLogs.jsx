@@ -39,7 +39,7 @@ export default function AlertLogs() {
           <p style={{ marginTop: '8px' }}>Consolidated security event notifications from multi-layer sensors.</p>
         </div>
         
-        <div className="filter-group" style={{ display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+        <div className="filter-group" style={{ display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
             {['all', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(s => (
                 <button 
                     key={s}
@@ -65,138 +65,133 @@ export default function AlertLogs() {
         </div>
       </div>
 
-      <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div className="table-scroll">
-          <table className="premium-table" style={{ minWidth: '700px' }}>
-            <thead>
-              <tr>
-                <th style={{ width: '12%', textAlign: 'left', padding: '16px 20px' }}>Severity</th>
-                <th style={{ width: '30%', textAlign: 'left', padding: '16px' }}>Threat Type & Source</th>
-                <th style={{ width: '20%', textAlign: 'left', padding: '16px' }}>Detection Engine</th>
-                <th style={{ width: '12%', textAlign: 'center', padding: '16px' }}>Risk %</th>
-                <th style={{ width: '15%', textAlign: 'right', padding: '16px 20px' }}>Time Occurred</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alerts.length > 0 ? alerts.map((alert, idx) => {
-                const atkStyle = getAttackColor(alert.Attack_Type || alert.alert_type || '');
-                const isCritical = alert.severity === 'CRITICAL' || alert.severity === 'HIGH';
-                const isExpanded = expandedId === idx;
-                
-                return (
-                  <tr key={idx} style={{ display: 'contents' }}>
-                    <td colSpan="5" style={{ padding: 0, display: 'table-cell' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
-                        <tbody>
-                          <tr 
-                            onClick={() => toggleExpand(idx)}
-                            style={{ cursor: 'pointer', transition: 'background 0.2s', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color)' }} 
-                          >
-                            <td style={{ padding: '20px', width: '12%' }}>
-                               <span style={{ 
-                                  fontSize: '9px', 
-                                  fontWeight: '900', 
-                                  background: isCritical ? 'rgba(220, 38, 38, 0.15)' : 'rgba(217, 119, 6, 0.15)',
-                                  color: isCritical ? 'var(--accent-red)' : 'var(--accent-orange)',
-                                  padding: '4px 10px',
-                                  borderRadius: '20px',
-                                  border: `1px solid ${isCritical ? 'rgba(220, 38, 38, 0.2)' : 'rgba(217, 119, 6, 0.2)'}`
-                                }}>
-                                  {alert.severity}
-                                </span>
-                            </td>
-                            <td style={{ padding: '16px', width: '30%' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                 <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: atkStyle.bg, borderRadius: '8px', flexShrink: 0 }}>
-                                   <div style={{ width: '18px', height: '18px' }}>{atkStyle.icon}</div>
-                                 </div>
-                                 <div style={{ minWidth: 0 }}>
-                                    <div style={{ fontWeight: '800', fontSize: '13px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alert.Attack_Type || alert.alert_type || 'Potential Infiltration'}</div>
-                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '2px' }}>{alert.Source_IP || alert.source_ip || '0.0.0.0'}</div>
-                                 </div>
-                              </div>
-                            </td>
-                            <td style={{ padding: '16px', width: '20%' }}>
-                               <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--accent-cyan)' }}>{alert.alert_source || 'AI-CORE'}</div>
-                               <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>{alert.alert_source === 'MITM' ? 'Hardware ARP Sensor' : 'Unified AI Engine'}</div>
-                            </td>
-                            <td style={{ padding: '16px', textAlign: 'center', width: '12%' }}>
-                               <div style={{ 
-                                 fontSize: '14px', 
-                                 fontWeight: '900', 
-                                 color: isCritical ? 'var(--accent-red)' : 'var(--accent-orange)' 
-                               }}>
-                                  {((alert.Final_Risk || alert.risk_score || 0) * 100).toFixed(0)}%
-                               </div>
-                            </td>
-                            <td style={{ padding: '20px', textAlign: 'right', width: '15%' }}>
-                               <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{alert.Timestamp?.split(' ')[1] || alert.timestamp?.split(' ')[1] || 'Real-time'}</div>
-                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>{alert.Timestamp?.split(' ')[0] || alert.timestamp?.split(' ')[0] || 'Today'}</div>
-                            </td>
-                          </tr>
-                          {isExpanded && (
-                            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                              <td colSpan="5" style={{ padding: '0 20px 20px 20px', background: 'var(--bg-surface)' }}>
-                                 <div style={{ 
-                                    background: 'var(--bg-card)', 
-                                    padding: '20px', 
-                                    borderRadius: '12px', 
-                                    border: '1px solid var(--border-color)',
-                                    marginTop: '10px'
-                                 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                                      <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-cyan)', letterSpacing: '1px' }}>
-                                        🧠 CYBERMATRIX EXPLAINABILITY LAYER
-                                      </div>
-                                      <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                                        Source: {alert.XAI_Source || 'Analytic Engine'}
-                                      </div>
-                                    </div>
-                                    <p style={{ fontSize: '13px', lineHeight: '1.6', color: 'var(--text-secondary)', margin: 0 }}>
-                                      {alert.XAI_Explanation || "Generating AI narrative... (Wait 5-10 seconds for analysis to complete)"}
-                                    </p>
-                                    {alert.Reasons && (
-                                      <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                        {(typeof alert.Reasons === 'string' ? alert.Reasons.split('|') : (Array.isArray(alert.Reasons) ? alert.Reasons : [])).map((r, i) => (
-                                          <span key={i} style={{ fontSize: '10px', background: 'var(--bg-surface)', padding: '3px 10px', borderRadius: '6px', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
-                                            {r.trim()}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    )}
-                                 </div>
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                )
-              }) : !loading && (
-                 <tr>
-                   <td colSpan="5" style={{ padding: '100px', textAlign: 'center' }}>
-                      <div style={{ opacity: 0.5, marginBottom: '20px' }}>
-                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-green)' }}>
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                            <polyline points="22 4 12 14.01 9 11.01" />
-                         </svg>
+      {/* Alert Cards — vertical scroll layout */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {alerts.length > 0 ? alerts.map((alert, idx) => {
+          const atkStyle = getAttackColor(alert.Attack_Type || alert.alert_type || '');
+          const isCritical = alert.severity === 'CRITICAL' || alert.severity === 'HIGH';
+          const isExpanded = expandedId === idx;
+
+          return (
+            <div key={idx} className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
+              {/* Main Row */}
+              <div 
+                onClick={() => toggleExpand(idx)}
+                style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '100px 1fr 1fr 80px 120px', 
+                  alignItems: 'center',
+                  padding: '16px 20px', 
+                  cursor: 'pointer', 
+                  transition: 'background 0.2s',
+                  gap: '16px'
+                }}
+                className="alert-row"
+              >
+                {/* Severity */}
+                <div>
+                  <span style={{ 
+                    fontSize: '9px', 
+                    fontWeight: '900', 
+                    background: isCritical ? 'rgba(220, 38, 38, 0.15)' : 'rgba(217, 119, 6, 0.15)',
+                    color: isCritical ? 'var(--accent-red)' : 'var(--accent-orange)',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    border: `1px solid ${isCritical ? 'rgba(220, 38, 38, 0.2)' : 'rgba(217, 119, 6, 0.2)'}`
+                  }}>
+                    {alert.severity}
+                  </span>
+                </div>
+
+                {/* Threat Type & Source */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                  <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: atkStyle.bg, borderRadius: '8px', flexShrink: 0 }}>
+                    <div style={{ width: '18px', height: '18px' }}>{atkStyle.icon}</div>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: '800', fontSize: '13px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alert.Attack_Type || alert.alert_type || 'Potential Infiltration'}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '2px' }}>{alert.Source_IP || alert.source_ip || '0.0.0.0'}</div>
+                  </div>
+                </div>
+
+                {/* Detection Engine */}
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--accent-cyan)' }}>{alert.alert_source || 'AI-CORE'}</div>
+                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>{alert.alert_source === 'MITM' ? 'Hardware ARP Sensor' : 'Unified AI Engine'}</div>
+                </div>
+
+                {/* Risk */}
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '900', 
+                    color: isCritical ? 'var(--accent-red)' : 'var(--accent-orange)' 
+                  }}>
+                    {((alert.Final_Risk || alert.risk_score || 0) * 100).toFixed(0)}%
+                  </div>
+                </div>
+
+                {/* Timestamp */}
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{alert.Timestamp?.split(' ')[1] || alert.timestamp?.split(' ')[1] || 'Real-time'}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>{alert.Timestamp?.split(' ')[0] || alert.timestamp?.split(' ')[0] || 'Today'}</div>
+                </div>
+              </div>
+
+              {/* Expanded XAI Panel */}
+              {isExpanded && (
+                <div style={{ padding: '0 20px 20px 20px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border-color)' }}>
+                  <div style={{ 
+                    background: 'var(--bg-card)', 
+                    padding: '20px', 
+                    borderRadius: '12px', 
+                    border: '1px solid var(--border-color)',
+                    marginTop: '16px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-cyan)', letterSpacing: '1px' }}>
+                        🧠 CYBERMATRIX EXPLAINABILITY LAYER
                       </div>
-                      <div style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '2px' }}>NO ACTIVE THREATS DETECTED</div>
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '8px', opacity: 0.6 }}>Security systems are operating within normal parameters</div>
-                   </td>
-                 </tr>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                        Source: {alert.XAI_Source || 'Analytic Engine'}
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '13px', lineHeight: '1.6', color: 'var(--text-secondary)', margin: 0 }}>
+                      {alert.XAI_Explanation || "Generating AI narrative... (Wait 5-10 seconds for analysis to complete)"}
+                    </p>
+                    {alert.Reasons && (
+                      <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {(typeof alert.Reasons === 'string' ? alert.Reasons.split('|') : (Array.isArray(alert.Reasons) ? alert.Reasons : [])).map((r, i) => (
+                          <span key={i} style={{ fontSize: '10px', background: 'var(--bg-surface)', padding: '3px 10px', borderRadius: '6px', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
+                            {r.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          )
+        }) : !loading && (
+          <div className="dash-card" style={{ padding: '100px', textAlign: 'center' }}>
+            <div style={{ opacity: 0.5, marginBottom: '20px' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-green)' }}>
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <div style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '2px' }}>NO ACTIVE THREATS DETECTED</div>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '8px', opacity: 0.6 }}>Security systems are operating within normal parameters</div>
+          </div>
+        )}
       </div>
       
       {loading && alerts.length === 0 && (
-         <div style={{ marginTop: '40px', textAlign: 'center' }}>
-            <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
-            <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-muted)', marginTop: '16px', letterSpacing: '2px' }}>POLLING SECURITY DATABASE...</div>
-         </div>
+        <div style={{ marginTop: '40px', textAlign: 'center' }}>
+          <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
+          <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-muted)', marginTop: '16px', letterSpacing: '2px' }}>POLLING SECURITY DATABASE...</div>
+        </div>
       )}
     </div>
   )

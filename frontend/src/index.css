@@ -996,6 +996,17 @@ input, button, select, textarea {
   .risk-circle .value {
     font-size: 26px;
   }
+
+  /* Alert Logs mobile vertical layout */
+  .alert-row {
+    grid-template-columns: 1fr auto !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+
+  .alert-row > div:nth-child(3) {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ═══════════════ RESPONSIVE — SMALL MOBILE (≤480px) ═══════════════ */
