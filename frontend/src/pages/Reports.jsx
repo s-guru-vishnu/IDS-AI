@@ -30,7 +30,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="stagger-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+      <div className="stagger-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: '24px', marginBottom: '32px' }}>
         <div className="dash-card">
           <div className="stat-label-premium">Total Packets</div>
           <div className="stat-value-premium">{totalPackets.toLocaleString()}</div>
@@ -52,7 +52,7 @@ export default function Reports() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '24px' }}>
           <div className="dash-card">
             <h3 style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '20px', letterSpacing: '1.5px', color: 'var(--text-muted)' }}>Top Attackers</h3>
             <div className="table-scroll">

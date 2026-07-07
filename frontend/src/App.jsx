@@ -1,7 +1,11 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useState, lazy, Suspense } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import Login from './pages/Login'
 import Navbar from './components/Navbar'
+import FloatingConsole from './components/FloatingConsole'
+import PageLoader from './components/PageLoader'
+
+
 
 // Lazy load all pages for performance (code splitting)
 const Overview = lazy(() => import('./pages/Overview'))
@@ -27,6 +31,31 @@ function LoadingFallback() {
 
 function App() {
   const [authToken, setAuthToken] = useState(localStorage.getItem('ids_auth_token'))
+  const [booting, setBooting] = useState(() => {
+    return !sessionStorage.getItem('cybermatrix_booted')
+  })
+  const [routeLoading, setRouteLoading] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (booting) return
+
+    setRouteLoading(true)
+    const timer = setTimeout(() => {
+      setRouteLoading(false)
+    }, 850)
+
+    return () => clearTimeout(timer)
+  }, [location.pathname])
+
+  const handleBootComplete = () => {
+    setBooting(false)
+    sessionStorage.setItem('cybermatrix_booted', 'true')
+  }
+
+  if (booting) {
+    return <PageLoader onComplete={handleBootComplete} />
+  }
 
   return (
     <Routes>
@@ -39,6 +68,9 @@ function App() {
         element={
           authToken ? (
             <div className="app-container">
+              {routeLoading && (
+                <PageLoader isRouteTransition={true} />
+              )}
               <Navbar authToken={authToken} setAuthToken={setAuthToken} />
               <main className="content-wrapper">
                 <Suspense fallback={<LoadingFallback />}>
@@ -55,6 +87,8 @@ function App() {
                   </Routes>
                 </Suspense>
               </main>
+
+              <FloatingConsole />
 
               <footer style={{ padding: '40px 0', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '60px', textAlign: 'center' }}>
                   <p style={{ fontSize: '12px', color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>

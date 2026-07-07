@@ -98,7 +98,7 @@ export default function Navbar() {
                 key={item.path}
                 to={item.path}
                 end={item.path === '/'}
-                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                className={({ isActive }) => `nav-item nav-item-cyber ${isActive ? 'active' : ''}`}
                 style={{ fontSize: '13px', fontWeight: '700' }}
               >
                 {item.label}

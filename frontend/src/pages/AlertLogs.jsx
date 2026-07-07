@@ -86,7 +86,7 @@ export default function AlertLogs() {
                   transition: 'background 0.2s',
                   gap: '16px'
                 }}
-                className="alert-row"
+                className={`alert-row log-table-row-hoverable ${isCritical ? 'row-critical' : 'row-warning'}`}
               >
                 {/* Severity */}
                 <div>

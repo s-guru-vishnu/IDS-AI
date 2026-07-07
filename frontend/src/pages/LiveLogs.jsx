@@ -77,7 +77,10 @@ export default function LiveLogs() {
                 const risk = parseFloat(log.Final_Risk || 0)
                 const riskColor = risk >= 0.8 ? 'var(--accent-red)' : risk >= 0.4 ? 'var(--accent-orange)' : 'var(--accent-green)'
                 return (
-                  <tr key={i} className={i < 3 && !paused ? 'row-new' : ''}>
+                  <tr 
+                    key={i} 
+                    className={`${i < 3 && !paused ? 'row-new' : ''} log-table-row-hoverable ${risk >= 0.8 ? 'row-critical' : risk >= 0.4 ? 'row-warning' : 'row-secure'}`}
+                  >
                     <td style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{log.Timestamp?.split(' ')[1] || '---'}</td>
                     <td style={{ fontWeight: '700', whiteSpace: 'nowrap' }}>{log.Source_IP}</td>
                     <td style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{log.Dest_IP || 'INTERNAL-SRS'}</td>

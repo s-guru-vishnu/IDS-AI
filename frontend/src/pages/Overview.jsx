@@ -155,7 +155,7 @@ export default function Overview() {
         </div>
 
         {/* Bottom Split Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+        <div className="overview-split-grid">
           
           {/* Bottom Left: Protocol Graph */}
           <div className="dash-card dash-card-mesh" style={{ minHeight: '380px' }}>
@@ -201,14 +201,42 @@ export default function Overview() {
             </div>
           </div>
 
-          {/* Bottom Right: RISK METER */}
-          <div className="dash-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <h3 className="section-title" style={{ marginBottom: '16px' }}>Threat Index</h3>
-              <div className="risk-meter-container">
+          {/* Bottom Right: RISK METER WITH HOLOGRAPHIC RADAR SWEEP */}
+          <div className="dash-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <h3 className="section-title" style={{ marginBottom: '16px', position: 'relative', zIndex: 2 }}>Threat Index</h3>
+              
+              <div className="radar-container">
+                  
+                  {/* Rotating Radar Sweep Vector */}
+                  <div className={`radar-sweep-vector ${threatPercentage > 80 ? 'radar-sweep-vector-danger' : (threatPercentage > 40 ? 'radar-sweep-vector-warning' : '')}`}>
+                     <svg width="220" height="220" viewBox="0 0 220 220" style={{ width: '100%', height: '100%' }}>
+                        <line 
+                          x1="110" y1="110" x2="110" y2="2" 
+                          stroke={threatPercentage > 80 ? 'var(--accent-red)' : (threatPercentage > 40 ? 'var(--accent-orange)' : 'var(--accent-cyan)')} 
+                          strokeWidth="1.2" 
+                          opacity="0.8"
+                        />
+                     </svg>
+                  </div>
+
+                  {/* Static Radar Grid Overlay */}
+                  <svg className="radar-grid" viewBox="0 0 220 220">
+                     <circle cx="110" cy="110" r="108" fill="none" stroke={threatPercentage > 80 ? 'rgba(239, 68, 68, 0.15)' : (threatPercentage > 40 ? 'rgba(251, 146, 60, 0.15)' : 'rgba(6, 182, 212, 0.15)')} strokeWidth="1" />
+                     <circle cx="110" cy="110" r="76" fill="none" stroke={threatPercentage > 80 ? 'rgba(239, 68, 68, 0.1)' : (threatPercentage > 40 ? 'rgba(251, 146, 60, 0.1)' : 'rgba(6, 182, 212, 0.1)')} strokeWidth="1" strokeDasharray="4 4" />
+                     <circle cx="110" cy="110" r="44" fill="none" stroke={threatPercentage > 80 ? 'rgba(239, 68, 68, 0.1)' : (threatPercentage > 40 ? 'rgba(251, 146, 60, 0.1)' : 'rgba(6, 182, 212, 0.1)')} strokeWidth="0.8" />
+                     
+                     <line x1="10" y1="110" x2="210" y2="110" stroke={threatPercentage > 80 ? 'rgba(239, 68, 68, 0.1)' : (threatPercentage > 40 ? 'rgba(251, 146, 60, 0.1)' : 'rgba(6, 182, 212, 0.1)')} strokeWidth="0.8" strokeDasharray="2 6" />
+                     <line x1="110" y1="10" x2="110" y2="210" stroke={threatPercentage > 80 ? 'rgba(239, 68, 68, 0.1)' : (threatPercentage > 40 ? 'rgba(251, 146, 60, 0.1)' : 'rgba(6, 182, 212, 0.1)')} strokeWidth="0.8" strokeDasharray="2 6" />
+                  </svg>
+
+                  {/* Central Risk Meter Circle */}
                   <div className="risk-circle glow-pulse" style={{ 
                       width: '150px', height: '150px', 
-                      border: '8px solid var(--accent-red-soft)', 
-                      boxShadow: `0 0 40px ${threatPercentage > 50 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)'}`,
+                      border: `8px solid ${threatPercentage > 80 ? 'rgba(239, 68, 68, 0.2)' : (threatPercentage > 40 ? 'rgba(251, 146, 60, 0.2)' : 'var(--accent-red-soft)')}`, 
+                      boxShadow: `0 0 40px ${threatPercentage > 80 ? 'rgba(239, 68, 68, 0.15)' : (threatPercentage > 40 ? 'rgba(251, 146, 60, 0.15)' : 'rgba(59, 130, 246, 0.15)')}`,
+                      position: 'relative',
+                      zIndex: 2,
+                      background: 'var(--bg-card)'
                   }}>
                       <div className="label">Composite</div>
                       <div className="value" style={{ 
@@ -231,36 +259,6 @@ export default function Overview() {
 
       {/* 4. PREMIUM TABLES SECTION */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        
-        {/* 1. Network Status */}
-        <div className="dash-card">
-           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <div style={{ width: '4px', height: '16px', background: 'var(--accent-blue)', borderRadius: '4px' }}></div>
-              <h3 className="section-title" style={{ margin: 0 }}>Network Infrastructure Report</h3>
-           </div>
-           <div className="table-scroll">
-             <table className="premium-table">
-               <thead>
-                 <tr>
-                   <th style={{ textAlign: 'left', padding: '12px 16px' }}>Network Metric</th>
-                   <th style={{ textAlign: 'right', padding: '12px 16px' }}>Current Value</th>
-                   <th style={{ textAlign: 'center', padding: '12px 16px' }}>Status</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {data?.report_summary?.map((row, i) => (
-                   <tr key={i}>
-                     <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-muted)' }}>{row.label}</td>
-                     <td style={{ padding: '16px', textAlign: 'right', fontWeight: '800', color: 'var(--accent-cyan)' }}>{row.value}</td>
-                     <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <span className="live-badge" style={{ background: 'rgba(5, 150, 105, 0.1)', color: 'var(--accent-green)', padding: '4px 8px', fontSize: '9px' }}>NOMINAL</span>
-                     </td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
-           </div>
-        </div>
 
         {/* 2. Alert Logs */}
         <div className="dash-card">
