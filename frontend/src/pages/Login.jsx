@@ -86,7 +86,7 @@ export default function Login({ setAuthToken }) {
     transition: 'border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     fontSize: '15px',
     fontWeight: '500',
-    fontFamily: '"Plus Jakarta Sans", sans-serif'
+    fontFamily: '"Space Grotesk", sans-serif'
   };
 
   const labelStyle = {
@@ -120,15 +120,8 @@ export default function Login({ setAuthToken }) {
         
         {/* Title Section */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <div className="avatar-3d" style={{ color: 'var(--accent-red)', marginBottom: '16px', display: 'flex', justifyContent: 'center', width: '56px', height: '56px', margin: '0 auto 16px', position: 'relative' }}>
-            <div style={{ 
-              width: '56px', height: '56px', borderRadius: '50%', 
-              background: 'linear-gradient(135deg, var(--accent-red), #991b1b)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(220, 38, 38, 0.3)'
-            }}>
-              <Icons.Shield />
-            </div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <img src="/Logo.png" alt="CyberMatrix" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
           </div>
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px' }}>
             {isRegister ? 'Create Account' : 'CyberMatrix'}

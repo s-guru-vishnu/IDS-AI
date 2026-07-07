@@ -85,9 +85,7 @@ export default function Navbar() {
           </button>
 
           <div className="logo-container" style={{ marginRight: '16px' }}>
-            <div className="logo-badge" style={{ background: 'var(--accent-red)' }}>
-              <Icons.Shield />
-            </div>
+            <img src="/Logo.png" alt="CyberMatrix" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
             <div className="logo-text" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <h1 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>CyberMatrix</h1>
               <span style={{ margin: 0, fontSize: '9px', fontWeight: '700', opacity: 0.6, letterSpacing: '1px' }}>CYBER DEFENSE PLATFORM</span>
