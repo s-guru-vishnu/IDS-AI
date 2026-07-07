@@ -84,7 +84,7 @@ export default function Overview() {
                 key={i} 
                 className="dash-card dash-card-mesh" 
                 style={{ borderLeft: `5px solid ${theme.color}`, padding: '24px', cursor: 'pointer' }}
-                onClick={() => navigate(`/attack-types/${t.attack_type}`)}
+                onClick={() => navigate(`/attack-types?class=${encodeURIComponent(t.attack_type)}`)}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', zIndex: 1 }}>
                   <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', opacity: 0.8, letterSpacing: '1px' }}>{t.attack_type}</div>

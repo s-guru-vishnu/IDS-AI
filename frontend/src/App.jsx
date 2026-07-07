@@ -49,7 +49,7 @@ function App() {
                     <Route path="/history" element={<History />} />
                     <Route path="/alert-logs" element={<AlertLogs />} />
                     <Route path="/blocked-ips" element={<BlockedIPs />} />
-                    <Route path="/attack-types/:type?" element={<AttackTypes />} />
+                    <Route path="/attack-types" element={<AttackTypes />} />
                     <Route path="/pipeline" element={<PipelineDashboard />} />
                     <Route path="/profile/u/:id" element={<Profile authToken={authToken} setAuthToken={setAuthToken} />} />
                   </Routes>

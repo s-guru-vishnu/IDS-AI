@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { fetchAPI, getAttackColor } from '../utils/IDS_API'
 
 export default function AttackTypes() {
-  const { type: urlType } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlType = searchParams.get('class') || ''
   const navigate = useNavigate()
   const [types, setTypes] = useState([])
   const [drilldown, setDrilldown] = useState(null)
@@ -17,7 +18,7 @@ export default function AttackTypes() {
     setLoading(true)
     try {
       if (urlType) {
-        const data = await fetchAPI(`/attack-types?type=${urlType}`)
+        const data = await fetchAPI(`/attack-types?type=${encodeURIComponent(urlType)}`)
         setDrilldown(data)
       } else {
         const data = await fetchAPI('/attack-types')
@@ -27,6 +28,14 @@ export default function AttackTypes() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const goToDrilldown = (attackType) => {
+    navigate(`/attack-types?class=${encodeURIComponent(attackType)}`)
+  }
+
+  const goBack = () => {
+    navigate('/attack-types')
   }
 
   if (loading && !urlType) return (
@@ -51,7 +60,7 @@ export default function AttackTypes() {
             {types.map((t, i) => {
               const theme = getAttackColor(t.attack_type);
               return (
-                <div key={i} className="dash-card dash-card-mesh" style={{ cursor: 'pointer', borderLeft: `4px solid ${theme.color}` }} onClick={() => navigate(`/attack-types/${t.attack_type}`)}>
+                <div key={i} className="dash-card dash-card-mesh" style={{ cursor: 'pointer', borderLeft: `4px solid ${theme.color}` }} onClick={() => goToDrilldown(t.attack_type)}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', zIndex: 1 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>{t.attack_type}</div>
@@ -78,7 +87,7 @@ export default function AttackTypes() {
           <div className="page-intro">
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
                 <button 
-                  onClick={() => navigate('/attack-types')} 
+                  onClick={goBack} 
                   className="btn-3d"
                   style={{ 
                     padding: '10px 16px', border: '1px solid var(--border-color)', 
@@ -118,7 +127,7 @@ export default function AttackTypes() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {drilldown?.records?.map((r, i) => (
+                                {drilldown?.records?.length > 0 ? drilldown.records.map((r, i) => (
                                   <tr key={i}>
                                       <td style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{r.Timestamp}</td>
                                       <td style={{ fontWeight: '800', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{r.Source_IP}</td>
@@ -133,7 +142,13 @@ export default function AttackTypes() {
                                       <td>{r.PPS} <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>PPS</span></td>
                                       <td><span className={`badge-premium ${r.Decision === 'BLOCK' ? 'badge-block' : 'badge-allow'}`}>{r.Decision}</span></td>
                                   </tr>
-                                ))}
+                                )) : (
+                                  <tr>
+                                    <td colSpan="5" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                                      {loading ? 'Loading records...' : 'NO INCIDENT RECORDS FOUND'}
+                                    </td>
+                                  </tr>
+                                )}
                             </tbody>
                         </table>
                       </div>
@@ -152,7 +167,7 @@ export default function AttackTypes() {
                       <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                           <div style={{ background: 'var(--bg-surface)', padding: '16px', borderRadius: '12px' }}>
                               <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Total Sample Set</div>
-                              <div style={{ fontSize: '24px', fontWeight: '800' }}>{drilldown?.stats?.total?.toLocaleString()}</div>
+                              <div style={{ fontSize: '24px', fontWeight: '800' }}>{drilldown?.stats?.total?.toLocaleString() || 0}</div>
                           </div>
                           <div style={{ background: 'var(--bg-surface)', padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--accent-red)' }}>
                               <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Peak Threat Intensity</div>
