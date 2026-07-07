@@ -55,13 +55,13 @@ export default function Navbar() {
   return (
     <header className="top-nav">
       <div className="nav-left">
-        <div className="logo-container" style={{ marginRight: '16px' }}>
-          <div className="logo-badge" style={{ background: 'var(--accent-red)' }}>
+        <div className="logo-container">
+          <div className="logo-badge">
             <Icons.Shield />
           </div>
-          <div className="logo-text" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h1 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>AI-IDS</h1>
-            <span style={{ margin: 0, fontSize: '9px', fontWeight: '700', opacity: 0.6, letterSpacing: '1px' }}>STEALTH SECURITY SYSTEMS</span>
+          <div className="logo-text">
+            <h1>AI-IDS</h1>
+            <span>STEALTH SECURITY SYSTEMS</span>
           </div>
         </div>
 
@@ -72,7 +72,6 @@ export default function Navbar() {
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-              style={{ fontSize: '13px', fontWeight: '700' }}
             >
               {item.label}
             </NavLink>
@@ -81,8 +80,8 @@ export default function Navbar() {
       </div>
 
       <div className="nav-right">
-        <div className="engine-status" style={{ border: 'none', background: 'var(--accent-blue-soft)', color: 'var(--accent-blue)', borderRadius: '10px' }}>
-          <div className="status-pulse" style={{ background: 'var(--accent-blue)' }}></div>
+        <div className="engine-status">
+          <div className="status-pulse"></div>
           DEFENSE ENGINE ACTIVE
         </div>
         

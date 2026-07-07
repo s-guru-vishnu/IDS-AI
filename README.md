@@ -105,9 +105,9 @@
                                                │
                                      (Scapy Sniffer Engine)
                                                │
-               ┌───────────────────────────────┴───────────────────────────────┐
-               ▼                                                               ▼
-    [ Layer-2 MITM Engine ]                                          [ Layer-4 / 7 DDoS Engine ]
+                ┌───────────────────────────────┴───────────────────────────────┐
+                ▼                                                               ▼
+     [ Layer-2 MITM Engine ]                                          [ Layer-4 / 7 DDoS Engine ]
   • ARP & DNS Monitoring                                         • Flow Buffer & Package Analyser
   • Gateway & Latency Checks                                     • Volumetric Thresholds (thresholds.json)
                │                                                               │
@@ -163,6 +163,7 @@ IDS-AI/
 │   │
 │   ├── model/                  # Machine Learning Assets
 │   │   ├── feature_extractor.py # 29-feature network packet parser
+
 │   │   ├── train_improved_ids.py # SMOTE training script
 │   │   ├── xgboost.pkl         # Trained XGBoost classifier
 │   │   └── isolation_forest.pkl# Anomaly detection model

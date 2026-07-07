@@ -31,6 +31,8 @@ DEFAULT_ORIGINS = [
     "https://thecybermatrix.space",
     "https://www.thecybermatrix.space",
     "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
     "http://localhost:3000",
 ]
 ALLOWED_ORIGINS = list(set(DEFAULT_ORIGINS + CORS_ORIGINS))
